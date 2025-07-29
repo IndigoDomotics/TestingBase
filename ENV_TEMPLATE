@@ -1,0 +1,89 @@
+###########################
+# These are the environmental variables that you must define in your local repo's .env file. Do NOT add any to this
+# repo.
+###########################
+# Shared variables used by multiple tests
+###########################
+## This will set the logging level
+shared.LOGGING_LEVEL=logging.INFO
+## This is the good API key used for testing. It can be either an API key from your Indigo Account or a secret in your
+## local secrets.json file.
+shared.GOOD_API_KEY=GOOD-KEY-HERE
+## The full hostname prefix to use for API calls - will default to https://localhost:8176 (no trailing /)
+shared.URL_PREFIX=https://localhost:8176
+## This is the URL path to the version of the API that's being used (no trailing /)
+shared.API_PREFIX=/v2/api
+## This is the ID of the plugin that you are testing. Primarily used to restart the plugin if necessary.
+shared.PLUGIN_ID=com.some.plugin
+## Should the plugin be restarted in the debugger
+shared.RESTART_IN_DEBUGGER=false
+## This is the amount of time to wait for a plugin to restart.
+shared.PLUGIN_RESTART_WAIT_TIME=5
+
+
+
+###########################
+# Cache class testing
+###########################
+test_cache_class.KeyCacheBaseTest.INDIGO_USER_ID=username  # used in the KeyCacheBaseTest which all other cache tests subclass
+test_cache_class.KeyCacheBaseTest.LICENSE_ID=12345  # used in the KeyCacheBaseTest which all other cache tests subclass
+###########################
+# API Key testing
+###########################
+test_iws_api_key.APIKeyBase.DEVICE_ID=12345    # ID of an Indigo device that supports toggle (relay, dimmer)
+###########################
+# Secrets Testing
+###########################
+test_secrets_file.SecretsBase.BAD_SECRET=BAD-SECRET-HERE  # This is a bad secret, not in the secrets.json file
+test_secrets_file.SecretsBase.DEVICE_ID=12345  # ID of an Indigo device that supports toggle (relay, dimmer)
+###########################
+# Device commands
+###########################
+test_api_http.DeviceCommandTests.DEVICE_ID=12345  # This device must support status requests
+test_api_http.RelayCommandTests.RELAY_ID=12345
+test_api_http.RelayCommandTests.TOGGLE_ID=12345
+test_api_http.RelayCommandTests.LOCK_ID=12345
+test_api_http.DimmerCommandTests.DIMMER_ID=12345
+test_api_http.MultiIoCommandTests.MULTI_IO_ID=12345
+test_api_http.SensorCommandTests.SENSOR_ID=12345
+test_api_http.SpeedControlCommandTests.SPEED_CONTROL_ID=12345
+test_api_http.SprinklerCommandTests.SPRINKLER_ID=12345
+test_api_http.ThermostatCommandTests.THERMOSTAT_ID=12345
+###########################
+# Action Group commands
+###########################
+test_api_http.ActionGroupCommandTests.ACTION_GROUP=12345
+test_api_http.ActionGroupCommandTests.TOGGLE_ID=12345
+###########################
+# Plugin commands
+###########################
+test_api_http.PluginCommandTests.EMAIL_PLUGIN_ID=com.indigodomo.email  # we use the Email+ plugin to test actions since it's always enabled
+test_api_http.PluginCommandTests.EMAIL_SMTP_DEV_ID=139658647  # an SMTP device for the Email+ plugin
+test_api_http.PluginCommandTests.EMAIL_ACTION_ID=sendEmail  # the action id for sending an email via the Email+ plugin
+test_api_http.PluginCommandTests.EMAIL_ACTION_PROPS="{'emailTo': 'TOEMAIL@HOST.COM','emailSubject': 'Unit Test Email', 'emailMessage': 'This is only a test. Please do not respond.'}"
+test_api_http.PluginCommandTests.ACTION_WAIT=True  # should we wait for the action to complete or not
+###########################
+# Variable commands
+###########################
+test_api_http.VariableCommandTests.VARIABLE_ID=12345
+###########################
+# Webhooks
+###########################
+# General Webhook Test params
+test_webhooks.WebhookTests.POST_JSON_WEBHOOK_ID=post-json-id
+test_webhooks.WebhookTests.POST_FORM_WEBHOOK_ID=post-form-id
+test_webhooks.WebhookTests.GET_WEBHOOK_ID=get-id
+# Bad webhook test values
+test_webhooks.BadWebhookTests.DISABLED_WEBHOOK_ID=disabled
+test_webhooks.BadWebhookTests.MISSING_WEBHOOK_ID=missing
+###########################
+# Indigo Touch Web
+###########################
+# URLs
+test_indigo_touch_web.IndigoTouchWebTests.LOCAL_TEST_URL=https://localhost:8176
+test_indigo_touch_web.IndigoTouchWebTests.REFLECTOR_TEST_URL=https://YOURREFLECTOR.indigodomo.net
+# Other contstants used
+test_indigo_touch_web.IndigoTouchWebTests.DATABASE_NAME="NAMEOFDBHERE"
+test_indigo_touch_web.IndigoTouchWebTests.CONTROL_PAGE_ID=CPIDHERE
+test_indigo_touch_web.IndigoTouchWebTests.CONTROL_PAGE_ELEMENT_ID=PAGEELEMIDHERE
+test_indigo_touch_web.IndigoTouchWebTests.VARIABLE_ID=VARIABLEIDHERE
