@@ -18,6 +18,7 @@ except ModuleNotFoundError:
 
 from .utils import get_install_folder, strtobool, HANDLER
 
+DEFAULT_TIMEOUT = 5.0  # This is the default for httpx
 
 class APIBase(unittest.TestCase, ABC):
     """
@@ -83,11 +84,15 @@ class APIBase(unittest.TestCase, ABC):
         subprocess.run(command_list)
         time.sleep(self.wait_time)
 
-    def send_raw_message(self, message_dict: dict, bearer_token: Optional[str] = None) -> httpx.Response:
+    def send_raw_message(self,
+                         message_dict: dict,
+                         bearer_token: Optional[str] = None,
+                         timeout: float = DEFAULT_TIMEOUT) -> httpx.Response:
         """ Send a message payload to the API and return the response object.
 
         :param message_dict: dictionary that contains the full/complete message to send
         :param bearer_token: a token to use for authentication - defaults to the configured shared.GOOD_API_KEY
+        :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
         if bearer_token is None:
@@ -95,15 +100,15 @@ class APIBase(unittest.TestCase, ABC):
         headers = {"Authorization": f"Bearer {bearer_token}"}
         url = f"{self.api_prefix}/command"
         self.logger.info("...sending HTTP API command")
-        return httpx.post(url, headers=headers, json=message_dict, verify=False)
+        return httpx.post(url, headers=headers, json=message_dict, verify=False, timeout=timeout)
 
     def send_simple_command(self,
                             message_id: str,
                             message: str,
                             object_id: int,
                             parameters: Optional[dict] = None,
-                            bearer_token: Optional[str] = None
-                            ) -> httpx.Response:
+                            bearer_token: Optional[str] = None,
+                            timeout: float = DEFAULT_TIMEOUT) -> httpx.Response:
         """ A simple method to create a message payload.
 
         :param message_id: the ID to pass through in the message - required in this method
@@ -112,6 +117,7 @@ class APIBase(unittest.TestCase, ABC):
         :param parameters: a dict of optional parameters to send with the message
         :param bearer_token: a token to use for authentication - defaults to the configured shared.GOOD_API_KEY in
                              send_raw_message
+        :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
         message = {
@@ -121,15 +127,20 @@ class APIBase(unittest.TestCase, ABC):
         }
         if parameters is not None:
             message["parameters"] = parameters
-        return self.send_raw_message(message, bearer_token)
+        return self.send_raw_message(message, bearer_token, timeout=timeout)
 
-    def get_indigo_object(self, endpoint: str, obj_id: int = False, bearer_token: str = None) -> httpx.Response:
+    def get_indigo_object(self,
+                          endpoint: str,
+                          obj_id: int = False,
+                          bearer_token: str = None,
+                          timeout: float = DEFAULT_TIMEOUT) -> httpx.Response:
         """
         Make httpx.get call to retrieve object props
 
         :param endpoint: devices, variables, actionGroups, etc.
         :param obj_id: id of object to retrieve [optional]
         :param bearer_token: the API key to use for communication, will use self.api_key by default [optional]
+        :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
         if bearer_token is None:
@@ -139,19 +150,21 @@ class APIBase(unittest.TestCase, ABC):
         if obj_id:
             # get a specific object
             url += f"/{obj_id}"
-        response = httpx.get(url, headers=headers, verify=False)
+        response = httpx.get(url, headers=headers, verify=False, timeout=timeout)
         return response
 
     def send_webhook(self,
                      message_dict: dict,
                      webhook_id: str,
-                     bearer_token: Optional[str]
+                     bearer_token: Optional[str],
+                     timeout: float = DEFAULT_TIMEOUT
                      ) -> httpx.Response:
         """ Send a webhook and return the response object.
 
         :param message_dict: dictionary that contains the full/complete message to send
         :param webhook_id: the webhook ID from the webhook config - required in this method
         :param bearer_token: a token to use for authentication - defaults to the configured shared.GOOD_API_KEY
+        :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
         url = f"{self.api_prefix}/webhook/{webhook_id}"
@@ -160,12 +173,24 @@ class APIBase(unittest.TestCase, ABC):
         headers["Authorization"] = f"Bearer {bearer_token}"
         self.logger.debug("sending webhook")
         if message_dict["method"] == "GET":
-            response = httpx.get(url, headers=headers, params=message_dict.get("params", None), verify=False)
+            response = httpx.get(url,
+                                 headers=headers,
+                                 params=message_dict.get("params", None),
+                                 verify=False,
+                                 timeout=timeout)
         elif message_dict["method"] == "POST" and message_dict.get("type", None) == "JSON":
-            response = httpx.post(url, headers=headers, json=message_dict.get("params", None), verify=False)
+            response = httpx.post(url,
+                                  headers=headers,
+                                  json=message_dict.get("params", None),
+                                  verify=False,
+                                  timeout=timeout)
         else:
             # default to HTTP FORM processing
-            response = httpx.post(url, headers=headers, data=message_dict.get("params", None), verify=False)
+            response = httpx.post(url,
+                                  headers=headers,
+                                  data=message_dict.get("params", None),
+                                  verify=False,
+                                  timeout=timeout)
         return response
 
     def _get_testcase_env_var(self,
