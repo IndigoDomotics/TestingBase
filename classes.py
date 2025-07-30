@@ -35,7 +35,7 @@ class APIBase(unittest.TestCase, ABC):
         print("setting up base class")
         cls._install_folder = get_install_folder()
 
-    def __init__(self, methodName: str, env_path: str = "..") -> None:
+    def __init__(self, methodName: str, env_path: str = ".") -> None:
         """
         Init for the base class.
 
