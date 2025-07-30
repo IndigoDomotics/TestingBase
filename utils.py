@@ -13,21 +13,12 @@ from typing import Optional
 try:
     import dotenv
 except ModuleNotFoundError:
-    sys.path.insert(0, "../Web Server.indigoPlugin/Contents/Packages")
-    import dotenv
+    print("you must have dotenv installed")
 
 try:
     import httpx
 except ModuleNotFoundError:
-    sys.path.insert(0, "../Web Server.indigoPlugin/Contents/Packages")
-    import httpx
-
-# We need the hardcoded string from the plugin.py file so that we can test with it included and not included.
-# try:
-#     from ../constants import DO_NOT_USE_API_KEYS
-# except ModuleNotFoundError:
-#     sys.path.insert(0, "../Web Server.indigoPlugin/Contents/Server Plugin")
-#     from constants import DO_NOT_USE_API_KEYS
+    print("you must have httpx installed")
 
 # This will be the standard logging format for all the logging in the tests.
 HANDLER: logging.Handler = logging.StreamHandler(sys.stdout)
@@ -36,7 +27,6 @@ pfmt = logging.Formatter(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 HANDLER.setFormatter(pfmt)
-
 
 def strtobool(val: str) -> bool:
     """
@@ -168,12 +158,13 @@ class APIBase(unittest.TestCase):
 
         :param endpoint: devices, variables, actionGroups, etc.
         :param obj_id: id of object to retrieve [optional]
+        :param bearer_token: the API key to use for communication, will use self.api_key by default [optional]
         :return response: httpx.Response object
         """
         if bearer_token is None:
             bearer_token = self.good_api_key
         url = f"{self.api_prefix}/indigo.{endpoint}"
-        headers = {'Authorization': f'Bearer {self.good_api_key}'}
+        headers = {'Authorization': f'Bearer {bearer_token}'}
         if obj_id:
             # get a specific object
             url += f"/{obj_id}"
