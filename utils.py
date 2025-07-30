@@ -34,7 +34,6 @@ def strtobool(val: str) -> bool:
     else:
         raise ValueError(f"invalid truth value: '{val}'")
 
-
 def get_install_folder() -> pathlib.PosixPath:
     """
     Return the installation folder path for the running Indigo Server.
