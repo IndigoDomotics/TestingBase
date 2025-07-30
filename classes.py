@@ -16,7 +16,7 @@ try:
 except ModuleNotFoundError:
     print("you must have httpx installed")
 
-from utils import get_install_folder, strtobool, HANDLER
+from .utils import get_install_folder, strtobool, HANDLER
 
 class APIBase(unittest.TestCase, ABC):
     """
