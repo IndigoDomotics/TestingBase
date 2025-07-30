@@ -18,11 +18,13 @@ except ModuleNotFoundError:
 
 from .utils import get_install_folder, strtobool, HANDLER
 
+
 class APIBase(unittest.TestCase, ABC):
     """
     This is the base class for all tests in the various repos. It provides all the plumbing to talk to the Indigo Server
     via the HTTP API. It also provides some simplified methods to do common tasks.
     """
+
     @classmethod
     def setUpClass(cls):
         """
@@ -138,6 +140,32 @@ class APIBase(unittest.TestCase, ABC):
             # get a specific object
             url += f"/{obj_id}"
         response = httpx.get(url, headers=headers, verify=False)
+        return response
+
+    def send_webhook(self,
+                     message_dict: dict,
+                     webhook_id: str,
+                     bearer_token: Optional[str]
+                     ) -> httpx.Response:
+        """ Send a webhook and return the response object.
+
+        :param message_dict: dictionary that contains the full/complete message to send
+        :param webhook_id: the webhook ID from the webhook config - required in this method
+        :param bearer_token: a token to use for authentication - defaults to the configured shared.GOOD_API_KEY
+        :return response: httpx.Response object
+        """
+        url = f"{self.api_prefix}/webhook/{webhook_id}"
+        headers = dict()
+        bearer_token = self.good_api_key
+        headers["Authorization"] = f"Bearer {bearer_token}"
+        self.logger.debug("sending webhook")
+        if message_dict["method"] == "GET":
+            response = httpx.get(url, headers=headers, params=message_dict.get("params", None), verify=False)
+        elif message_dict["method"] == "POST" and message_dict.get("type", None) == "JSON":
+            response = httpx.post(url, headers=headers, json=message_dict.get("params", None), verify=False)
+        else:
+            # default to HTTP FORM processing
+            response = httpx.post(url, headers=headers, data=message_dict.get("params", None), verify=False)
         return response
 
     def _get_testcase_env_var(self,
