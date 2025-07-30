@@ -12,3 +12,4 @@ WebServerPlugin
         .env  <- this is where you set the environment vars specified in the template
         test_something.py  <- your test cases would subclass shared.utils.APIBase
 
+In order to use this repo, you must have python-dotenv and httpx installed.
