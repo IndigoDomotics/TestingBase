@@ -68,8 +68,8 @@ from shared import APIBase
 
 class MyTestCase(APIBase):
     def __init__(self, methodName: str) -> None:
-        # If you want dotenv to look for a .env file somewhere else, pass the *path* here. The default
-        # is the parent directory ".." so you can just not pass anything for the second arg.
-        super(APIBase, self).__init__(methodName, "/my/custom/path/to/)
+        # If you want dotenv to look for a .env file somewhere else, pass the path here. The default
+        # is the current working directory so you can just not pass anything for the second arg.
+        super(APIBase, self).__init__(methodName, "/my/custom/path/to/.env")
 ```
 

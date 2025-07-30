@@ -58,7 +58,7 @@ class APIBase(unittest.TestCase, ABC):
         self.restart_plugin_in_debugger: bool = strtobool(self._get_shared_env_var("RESTART_IN_DEBUGGER"))
         # When you restart, wait this many seconds before continuing. This will give the plugin enough time to get
         # fully started.
-        self.wait_time: int = self._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME")
+        self.wait_time: int = int(self._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME"))
         # While print() statements work while running tests, using a logger is a better solution
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.logger.addHandler(HANDLER)
