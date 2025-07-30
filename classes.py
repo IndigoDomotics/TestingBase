@@ -35,12 +35,12 @@ class APIBase(unittest.TestCase, ABC):
         print("setting up base class")
         cls._install_folder = get_install_folder()
 
-    def __init__(self, methodName: str, env_path: str = ".") -> None:
+    def __init__(self, methodName: str, env_path: str = ".env") -> None:
         """
         Init for the base class.
 
         :param methodName: the method name to run
-        :param env_path: the path to the .env file, by default we'll look at the parent directory
+        :param env_path: the path to the .env file, by default we'll just look in the current working directory
         :return: None
         """
         super(APIBase, self).__init__(methodName)
