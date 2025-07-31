@@ -19,6 +19,7 @@ except ModuleNotFoundError:
 from .utils import get_install_folder, strtobool, HANDLER
 
 DEFAULT_TIMEOUT = 5.0  # This is the default for httpx
+DEFAULT_WEBHOOK_TIMEOUT = 10.0  # Webhooks take longer to process, we we have a longer timeout
 
 class APIBase(unittest.TestCase, ABC):
     """
@@ -157,7 +158,7 @@ class APIBase(unittest.TestCase, ABC):
                      message_dict: dict,
                      webhook_id: str,
                      bearer_token: Optional[str],
-                     timeout: float = DEFAULT_TIMEOUT
+                     timeout: float = DEFAULT_WEBHOOK_TIMEOUT
                      ) -> httpx.Response:
         """ Send a webhook and return the response object.
 
