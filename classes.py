@@ -167,7 +167,7 @@ class APIBase(unittest.TestCase, ABC):
         :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
-        url = f"{self.api_prefix}/webhook/{webhook_id}"
+        url = f"{self.url_prefix}/webhook/{webhook_id}"
         headers = dict()
         bearer_token = self.good_api_key
         headers["Authorization"] = f"Bearer {bearer_token}"
