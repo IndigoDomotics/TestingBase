@@ -3,6 +3,7 @@ import os
 import subprocess
 import time
 import unittest
+import enum
 from typing import Optional
 from abc import ABC
 
@@ -19,6 +20,15 @@ except ModuleNotFoundError:
 from .utils import get_install_folder, strtobool, HANDLER
 
 DEFAULT_TIMEOUT = 5.0  # This is the default for httpx
+
+class WebhookStatusCode(enum.IntEnum):
+    GOOD = 200  # Webhook completed successfully
+    BAD_REQUEST = 400  # Webhook didn't supply JSON when it was configured for JSON
+    MISSING = 404  # Webhook ID isn't defined
+    BAD_METHOD = 405  # Webhook using a method other than what was configured
+    SERVER_ERROR = 500  # Unexpected exception happened during processing - will write error and stack trace to log
+    DISABLED = 503  # Webhook ID exists but is disabled
+
 
 class APIBase(unittest.TestCase, ABC):
     """
