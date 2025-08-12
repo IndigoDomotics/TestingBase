@@ -14,12 +14,33 @@ pfmt = logging.Formatter(
 )
 HANDLER.setFormatter(pfmt)
 
-def strtobool(val: str) -> bool:
+####################
+# The following are direct copies from the Py3Libraries/utils.py file in the IndigoProj repo.
+####################
+BOOL_MAP_TRUE: dict[str, str] = {
+    "y": "n",
+    "yes": "no",
+    "t": "f",
+    "true": "false",
+    "on": "off",
+    "1": "0",
+    "open": "closed",
+    "locked": "unlocked",
+}
+
+BOOL_MAP_FALSE: dict[str, str] = {v: k for k, v in BOOL_MAP_TRUE.items()}
+
+def str_to_bool(val: str) -> bool:
     """
     Convert a string representation of truth to true (1) or false (0).
     True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
     are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
     'val' is anything else.
+
+    This is directly from distutils.util.strtobool, but replicated here
+    because it's deprecated in python 3.12.
+
+    I've added open/closed and locked/unlocked.
 
     :param val: the value to convert
     :return: bool
@@ -27,10 +48,26 @@ def strtobool(val: str) -> bool:
     if isinstance(val, bool):
         return val
     val = val.lower()
-    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+    if val in BOOL_MAP_TRUE.keys():
         return True
-    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+    elif val in BOOL_MAP_FALSE.keys():
         return False
+    else:
+        raise ValueError(f"invalid truth value: '{val}'")
+
+def reverse_bool_str_value(val: str) -> str:
+    """
+    Return the opposite boolean string value of the supplied string.
+
+    :param val: a string representing a boolean value
+    :return: a string representing the opposite boolean value
+    """
+    if isinstance(val, bool):
+        return str(not val)
+    if val in BOOL_MAP_TRUE.keys():
+        return BOOL_MAP_TRUE[val]
+    elif val in BOOL_MAP_FALSE.keys():
+        return BOOL_MAP_FALSE[val]
     else:
         raise ValueError(f"invalid truth value: '{val}'")
 
