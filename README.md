@@ -33,8 +33,13 @@ can tell by looking for the `.gitmodules` file at the top level of the repo. It 
 	url = https://github.com/IndigoDomotics/TestingBase.git
 ```
 
-If that file is there and contains the `tests/shared` submodule definition, then you can just jump down to the 
-**[Updating the TestingBase submodule in your repo]()** section - you will need to do that before tests will run.
+If that file is there and contains the `tests/shared` submodule definition, you'll need to init it from the command 
+line:
+
+`git submodule update --init`
+
+That should get the initial repo. Then you can just jump down to the 
+**[Updating the TestingBase submodule in your repo]()** section to update the repo as necessary.
 
 ### Adding the TestingBase submodule to your own repo
 
