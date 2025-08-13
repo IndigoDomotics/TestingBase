@@ -30,7 +30,7 @@ def str_to_bool(val: str) -> bool:
     """
     script: str = f"""
 import utils, json, logging
-indigo.server.log(f"str_to_bool({val})", type="TestingBase", level=logging.DEBUG);
+indigo.server.log(f"str_to_bool('{val}')", type="TestingBase", level=logging.DEBUG);
 return json.dumps(utils.str_to_bool('{val}'))
 """
     return json.loads(run_host_script(script))
@@ -46,7 +46,7 @@ def reverse_bool_str_value(val: str) -> bool:
     """
     script: str = f"""
 import utils, json, logging
-indigo.server.log(f"reverse_bool_str_value({val})", type="TestingBase", level=logging.DEBUG);
+indigo.server.log(f"reverse_bool_str_value('{val}')", type="TestingBase", level=logging.DEBUG);
 return json.dumps(utils.reverse_bool_str_value('{val}'))
 """
     return json.loads(run_host_script(script))
