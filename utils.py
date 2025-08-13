@@ -5,6 +5,8 @@ import logging
 import sys
 import subprocess
 import pathlib
+import json
+from typing import Optional
 
 # This will be the standard logging format for all the logging in the tests.
 HANDLER: logging.Handler = logging.StreamHandler(sys.stdout)
@@ -15,61 +17,37 @@ pfmt = logging.Formatter(
 HANDLER.setFormatter(pfmt)
 
 ####################
-# The following are direct copies from the Py3Libraries/utils.py file in the IndigoProj repo.
+# The following are wrappers around the IOM utility functions so that we'll get consistent results
 ####################
-BOOL_MAP_TRUE: dict[str, str] = {
-    "y": "n",
-    "yes": "no",
-    "t": "f",
-    "true": "false",
-    "on": "off",
-    "1": "0",
-    "open": "closed",
-    "locked": "unlocked",
-}
-
-BOOL_MAP_FALSE: dict[str, str] = {v: k for k, v in BOOL_MAP_TRUE.items()}
-
 def str_to_bool(val: str) -> bool:
     """
-    Convert a string representation of truth to true (1) or false (0).
-    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
-    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
-    'val' is anything else.
-
-    This is directly from distutils.util.strtobool, but replicated here
-    because it's deprecated in python 3.12.
-
-    I've added open/closed and locked/unlocked.
-
-    :param val: the value to convert
-    :return: bool
-    """
-    if isinstance(val, bool):
-        return val
-    val = val.lower()
-    if val in BOOL_MAP_TRUE.keys():
-        return True
-    elif val in BOOL_MAP_FALSE.keys():
-        return False
-    else:
-        raise ValueError(f"invalid truth value: '{val}'")
-
-def reverse_bool_str_value(val: str) -> str:
-    """
-    Return the opposite boolean string value of the supplied string.
+    Return the boolean value of the supplied string. We call IPH3 to do the conversion so we're sure
+    that the boolean is what the IOM would generate. The script encodes in JSON then unencodes the result is decoded
+    so that we don't have to eval() it.
 
     :param val: a string representing a boolean value
-    :return: a string representing the opposite boolean value
+    :return: a JSON string representing the opposite boolean value
     """
-    if isinstance(val, bool):
-        return str(not val)
-    if val in BOOL_MAP_TRUE.keys():
-        return BOOL_MAP_TRUE[val]
-    elif val in BOOL_MAP_FALSE.keys():
-        return BOOL_MAP_FALSE[val]
-    else:
-        raise ValueError(f"invalid truth value: '{val}'")
+    script: str = f"""
+import utils, json
+return json.dumps(utils.str_to_bool('{val}'))
+"""
+    return json.loads(_run_host_script(script))
+
+def reverse_bool_str_value(val: str) -> bool:
+    """
+    Return the opposite boolean string value of the supplied string. We call IPH3 to do the conversion so we're sure
+    that the value is what the IOM would generate. The script encodes in JSON then unencodes the result is decoded
+    so that we don't have to eval() it.
+
+    :param val: a string representing a boolean value
+    :return: a JSON string representing the opposite boolean value
+    """
+    script: str = f"""
+import utils, json
+return json.dumps(utils.reverse_bool_str_value('{val}'))
+"""
+    return json.loads(_run_host_script(script))
 
 def get_install_folder() -> pathlib.PosixPath:
     """
@@ -77,9 +55,24 @@ def get_install_folder() -> pathlib.PosixPath:
 
     :return: the posix path to the installation folder
     """
+    script: str = """
+import logging
+indigo.server.log("getting install folder", type="TestingBase", level=logging.DEBUG);
+return indigo.server.getInstallFolderPath()
+"""
+    return pathlib.PosixPath(_run_host_script(script))
+
+def _run_host_script(script: str) -> str:
+    """
+    This will run the given script in the local IndigoPluginHost3 process and return the result. The reply will always
+    be a string, so unless what you are calling returns a string, you should JSON encode it then decode it when this
+    function returns.
+
+    :param script: string containing the IOM script to run
+    :return: string containing the result
+    """
     result: subprocess.CompletedProcess = subprocess.run(
-        ["/usr/local/indigo/indigo-host", "-e",
-         'indigo.server.log("getting install folder"); return indigo.server.getInstallFolderPath()'],
+        ["/usr/local/indigo/indigo-host", "-e", script],
         stdout=subprocess.PIPE
     )
-    return pathlib.PosixPath(result.stdout.decode("utf8").strip("\n"))
+    return result.stdout.decode("utf8").strip("\n")
