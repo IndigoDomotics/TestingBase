@@ -33,7 +33,7 @@ import utils, json, logging
 indigo.server.log(f"str_to_bool({str})", type="TestingBase", level=logging.DEBUG);
 return json.dumps(utils.str_to_bool('{val}'))
 """
-    return json.loads(_run_host_script(script))
+    return json.loads(run_host_script(script))
 
 def reverse_bool_str_value(val: str) -> bool:
     """
@@ -49,7 +49,7 @@ import utils, json, logging
 indigo.server.log(f"reverse_bool_str_value({str})", type="TestingBase", level=logging.DEBUG);
 return json.dumps(utils.reverse_bool_str_value('{val}'))
 """
-    return json.loads(_run_host_script(script))
+    return json.loads(run_host_script(script))
 
 def get_install_folder() -> pathlib.PosixPath:
     """
@@ -62,9 +62,9 @@ import logging
 indigo.server.log("getting install folder", type="TestingBase", level=logging.DEBUG);
 return indigo.server.getInstallFolderPath()
 """
-    return pathlib.PosixPath(_run_host_script(script))
+    return pathlib.PosixPath(run_host_script(script))
 
-def _run_host_script(script: str) -> str:
+def run_host_script(script: str) -> str:
     """
     This will run the given script in the local IndigoPluginHost3 process and return the result. The reply will always
     be a string, so unless what you are calling returns a string, you should JSON encode it then decode it when this
