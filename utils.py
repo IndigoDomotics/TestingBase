@@ -29,7 +29,8 @@ def str_to_bool(val: str) -> bool:
     :return: a JSON string representing the opposite boolean value
     """
     script: str = f"""
-import utils, json
+import utils, json, logging
+indigo.server.log(f"str_to_bool({str})", type="TestingBase", level=logging.DEBUG);
 return json.dumps(utils.str_to_bool('{val}'))
 """
     return json.loads(_run_host_script(script))
@@ -44,7 +45,8 @@ def reverse_bool_str_value(val: str) -> bool:
     :return: a JSON string representing the opposite boolean value
     """
     script: str = f"""
-import utils, json
+import utils, json, logging
+indigo.server.log(f"reverse_bool_str_value({str})", type="TestingBase", level=logging.DEBUG);
 return json.dumps(utils.reverse_bool_str_value('{val}'))
 """
     return json.loads(_run_host_script(script))
