@@ -17,7 +17,7 @@ try:
 except ModuleNotFoundError:
     print("you must have httpx installed")
 
-from .utils import get_install_folder, strtobool, HANDLER
+from .utils import get_install_folder, str_to_bool, HANDLER
 
 DEFAULT_TIMEOUT = 5.0  # This is the default for httpx
 
@@ -68,7 +68,7 @@ class APIBase(unittest.TestCase, ABC):
         # This is the ID of the plugin that is being tested - in case you want to restart it while testing
         self.plugin_id: str = self._get_shared_env_var("PLUGIN_ID")
         # If you do restart, do you want to restart it in the debugger?
-        self.restart_plugin_in_debugger: bool = strtobool(self._get_shared_env_var("RESTART_IN_DEBUGGER"))
+        self.restart_plugin_in_debugger: bool = str_to_bool(self._get_shared_env_var("RESTART_IN_DEBUGGER"))
         # When you restart, wait this many seconds before continuing. This will give the plugin enough time to get
         # fully started.
         self.wait_time: int = int(self._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME"))
