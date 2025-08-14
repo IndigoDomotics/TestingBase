@@ -135,14 +135,14 @@ class APIBase(unittest.TestCase, ABC):
         :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
-        message = {
+        message_dict = {
             "id": message_id,
             "message": message,
             "objectId": int(object_id)
         }
         if parameters is not None:
-            message["parameters"] = parameters
-        return cls.send_raw_message(message, bearer_token, timeout=timeout)
+            message_dict["parameters"] = parameters
+        return cls.send_raw_message(message_dict, bearer_token, timeout=timeout)
 
     @classmethod
     def get_indigo_object(cls,
