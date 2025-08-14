@@ -6,7 +6,7 @@ import sys
 import subprocess
 import pathlib
 import json
-from typing import Optional
+from datetime import timedelta
 
 # This will be the standard logging format for all the logging in the tests.
 HANDLER: logging.Handler = logging.StreamHandler(sys.stdout)
@@ -78,3 +78,7 @@ def run_host_script(script: str) -> str:
         stdout=subprocess.PIPE
     )
     return result.stdout.decode("utf8").strip("\n")
+
+def within_time_tolerance(dt1, dt2, tolerance_seconds=1):
+    """Check if two datetime objects are within specified seconds of each other"""
+    return abs(dt1 - dt2) <= timedelta(seconds=tolerance_seconds)
