@@ -35,18 +35,33 @@ class APIBase(unittest.TestCase, ABC):
     This is the base class for all tests in the various repos. It provides all the plumbing to talk to the Indigo Server
     via the HTTP API. It also provides some simplified methods to do common tasks.
     """
+    # We define the logger class variable here so that we can access it both in normal methods as self.logger and in
+    # class methods as self.logger. We will actually get the logger and set attributes in the __init__ method.
+    logger: logging.Logger = None
 
     @classmethod
     def setUpClass(cls):
         """
-        This is a class method because it requires running a script against the installed IndigoPluginHost process in
-        order to get the install directory. We just want to run it once before the first test case and remember it for
-        the rest.
+        These are things that are set up once for the class - any further instances created will share this stuff.
 
         :return: None
         """
         print("setting up base class")
         cls._install_folder = get_install_folder()
+        # We always look for a good API key to use for all HTTP communication
+        cls.good_api_key: str = cls._get_shared_env_var("GOOD_API_KEY")
+        # This is the URL prefix - like https://localhost:8176 or https://myreflector.indigodomo.net
+        cls.url_prefix: str = f"{cls._get_shared_env_var('URL_PREFIX')}"
+        # This is the full URL to the HTTP API
+        cls.api_prefix: str = f"{cls.url_prefix}/v2/api"
+        # This is the ID of the plugin that is being tested - in case you want to restart it while testing
+        cls.plugin_id: str = cls._get_shared_env_var("PLUGIN_ID")
+        # If you do restart, do you want to restart it in the debugger?
+        cls.restart_plugin_in_debugger: bool = str_to_bool(cls._get_shared_env_var("RESTART_IN_DEBUGGER"))
+        # When you restart, wait this many seconds before continuing. This will give the plugin enough time to get
+        # fully started.
+        cls.wait_time: int = int(cls._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME"))
+        # While print() statements work while running tests, using a logger is a better solution
 
     def __init__(self, methodName: str, env_path: str = ".env") -> None:
         """
@@ -59,28 +74,16 @@ class APIBase(unittest.TestCase, ABC):
         super(APIBase, self).__init__(methodName)
         # Load the file containing the environment variables for the user's install
         dotenv.load_dotenv(env_path)
-        # We always look for a good API key to use for all HTTP communication
-        self.good_api_key: str = self._get_shared_env_var("GOOD_API_KEY")
-        # This is the URL prefix - like https://localhost:8176 or https://myreflector.indigodomo.net
-        self.url_prefix: str = f"{self._get_shared_env_var('URL_PREFIX')}"
-        # This is the full URL to the HTTP API
-        self.api_prefix: str = f"{self.url_prefix}/v2/api"
-        # This is the ID of the plugin that is being tested - in case you want to restart it while testing
-        self.plugin_id: str = self._get_shared_env_var("PLUGIN_ID")
-        # If you do restart, do you want to restart it in the debugger?
-        self.restart_plugin_in_debugger: bool = str_to_bool(self._get_shared_env_var("RESTART_IN_DEBUGGER"))
-        # When you restart, wait this many seconds before continuing. This will give the plugin enough time to get
-        # fully started.
-        self.wait_time: int = int(self._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME"))
-        # While print() statements work while running tests, using a logger is a better solution
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        base_class = self.__class__.__bases__[0]
+        base_class.logger = logging.getLogger(self.__class__.__name__)
         self.logger.addHandler(HANDLER)
         try:
             self.logger.setLevel(eval(self._get_shared_env_var("LOGGING_LEVEL")))
         except:
             self.logger.setLevel(logging.INFO)
 
-    def restart_plugin(self) -> None:
+    @classmethod
+    def restart_plugin(cls) -> None:
         """
         Use this function to restart a plugin. We're defaulting to settings for IWS, but it could be called with another
         plugin if we wanted to.
@@ -88,13 +91,14 @@ class APIBase(unittest.TestCase, ABC):
         :return: None
         """
         command_list: list = ["/usr/local/indigo/indigo-restart-plugin"]
-        if self.restart_plugin_in_debugger:
+        if cls.restart_plugin_in_debugger:
             command_list.append("-d")
-        command_list.append(self.plugin_id)
+        command_list.append(cls.plugin_id)
         subprocess.run(command_list)
-        time.sleep(self.wait_time)
+        time.sleep(cls.wait_time)
 
-    def send_raw_message(self,
+    @classmethod
+    def send_raw_message(cls,
                          message_dict: dict,
                          bearer_token: Optional[str] = None,
                          timeout: float = DEFAULT_TIMEOUT) -> httpx.Response:
@@ -106,13 +110,14 @@ class APIBase(unittest.TestCase, ABC):
         :return response: httpx.Response object
         """
         if bearer_token is None:
-            bearer_token = self.good_api_key
+            bearer_token = cls.good_api_key
         headers = {"Authorization": f"Bearer {bearer_token}"}
-        url = f"{self.api_prefix}/command"
-        self.logger.info("...sending HTTP API command")
+        url = f"{cls.api_prefix}/command"
+        cls.logger.info("...sending HTTP API command")
         return httpx.post(url, headers=headers, json=message_dict, verify=False, timeout=timeout)
 
-    def send_simple_command(self,
+    @classmethod
+    def send_simple_command(cls,
                             message_id: str,
                             message: str,
                             object_id: int,
@@ -137,9 +142,10 @@ class APIBase(unittest.TestCase, ABC):
         }
         if parameters is not None:
             message["parameters"] = parameters
-        return self.send_raw_message(message, bearer_token, timeout=timeout)
+        return cls.send_raw_message(message, bearer_token, timeout=timeout)
 
-    def get_indigo_object(self,
+    @classmethod
+    def get_indigo_object(cls,
                           endpoint: str,
                           obj_id: int = False,
                           bearer_token: str = None,
@@ -154,8 +160,8 @@ class APIBase(unittest.TestCase, ABC):
         :return response: httpx.Response object
         """
         if bearer_token is None:
-            bearer_token = self.good_api_key
-        url = f"{self.api_prefix}/indigo.{endpoint}"
+            bearer_token = cls.good_api_key
+        url = f"{cls.api_prefix}/indigo.{endpoint}"
         headers = {'Authorization': f'Bearer {bearer_token}'}
         if obj_id:
             # get a specific object
@@ -163,7 +169,8 @@ class APIBase(unittest.TestCase, ABC):
         response = httpx.get(url, headers=headers, verify=False, timeout=timeout)
         return response
 
-    def send_webhook(self,
+    @classmethod
+    def send_webhook(cls,
                      message_dict: dict,
                      webhook_id: str,
                      bearer_token: Optional[str],
@@ -177,11 +184,11 @@ class APIBase(unittest.TestCase, ABC):
         :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
-        url = f"{self.url_prefix}/webhook/{webhook_id}"
+        url = f"{cls.url_prefix}/webhook/{webhook_id}"
         headers = dict()
-        bearer_token = self.good_api_key
+        bearer_token = cls.good_api_key
         headers["Authorization"] = f"Bearer {bearer_token}"
-        self.logger.debug("sending webhook")
+        cls.logger.debug("sending webhook")
         if message_dict["method"] == "GET":
             response = httpx.get(url,
                                  headers=headers,
@@ -203,7 +210,8 @@ class APIBase(unittest.TestCase, ABC):
                                   timeout=timeout)
         return response
 
-    def _get_testcase_env_var(self,
+    @classmethod
+    def _get_testcase_env_var(cls,
                               var_name: str,
                               module: Optional[str] = None,
                               test_case_name: Optional[str] = None,
@@ -211,9 +219,9 @@ class APIBase(unittest.TestCase, ABC):
                               default: Optional[any] = None
                               ) -> any:
         if not module:
-            module = self.__module__
+            module = cls.__module__
         if not test_case_name:
-            test_case_name = self.__class__.__name__
+            test_case_name = cls.__class__.__name__
         var_specifier = f"{module}.{test_case_name}"
         if test_method_name:
             var_specifier += f".{test_method_name}"
@@ -223,13 +231,19 @@ class APIBase(unittest.TestCase, ABC):
         except:
             try:
                 # Tweak the var_specifier to that it tries the name of the super class (WebhookTestBase for BadWebhookTests)
+                test_case_name = cls.__bases__[0].__name__
+                var_specifier = f"{module}.{test_case_name}"
+                if test_method_name:
+                    var_specifier += f".{test_method_name}"
+                var_specifier += f".{var_name}"
                 return os.environ[var_specifier]
             except:
                 if default is not None:
                     return default
                 raise
 
-    def _get_shared_env_var(self, var_name: str, default: Optional[any] = None) -> any:
+    @classmethod
+    def _get_shared_env_var(cls, var_name: str, default: Optional[any] = None) -> any:
         try:
             return os.environ[f"shared.{var_name}"]
         except:
