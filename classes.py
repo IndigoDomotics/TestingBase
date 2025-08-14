@@ -221,7 +221,7 @@ class APIBase(unittest.TestCase, ABC):
         if not module:
             module = cls.__module__
         if not test_case_name:
-            test_case_name = cls.__class__.__name__
+            test_case_name = cls.__name__
         var_specifier = f"{module}.{test_case_name}"
         if test_method_name:
             var_specifier += f".{test_method_name}"
