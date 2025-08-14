@@ -5,7 +5,7 @@ import time
 import unittest
 import enum
 import json
-from typing import Optional, Union
+from typing import Optional, Union, Type
 from abc import ABC
 
 try:
@@ -217,7 +217,7 @@ class APIBase(unittest.TestCase, ABC):
                               module: Optional[str] = None,
                               test_case_name: Optional[str] = None,
                               test_method_name: Optional[str] = None,
-                              expected_type: Union[str, int, bool] = str,
+                              expected_type: Union[Type[str], Type[int], Type[bool]] = str,
                               default: Optional[any] = None
                               ) -> any:
         if not module:
@@ -258,7 +258,7 @@ class APIBase(unittest.TestCase, ABC):
     @classmethod
     def _get_shared_env_var(cls,
                             var_name: str,
-                            expected_type: Union[str, int, bool] = str,
+                            expected_type: Union[Type[str], Type[int], Type[bool]] = str,
                             default: Optional[any] = None
                             ) -> any:
         value = default
