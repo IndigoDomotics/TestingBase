@@ -1,6 +1,6 @@
 ###########################
 # These are the environmental variables that you must define in your local repo's .env file. Do NOT add any to this
-# repo.
+# repo. Boolean values should be the word "true" or "false" (though any case works since we lower() it)
 ###########################
 # Shared variables used by multiple tests
 ###########################

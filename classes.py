@@ -4,7 +4,8 @@ import subprocess
 import time
 import unittest
 import enum
-from typing import Optional
+import json
+from typing import Optional, Union
 from abc import ABC
 
 try:
@@ -216,6 +217,7 @@ class APIBase(unittest.TestCase, ABC):
                               module: Optional[str] = None,
                               test_case_name: Optional[str] = None,
                               test_method_name: Optional[str] = None,
+                              expected_type: Union[str, int, bool] = str,
                               default: Optional[any] = None
                               ) -> any:
         if not module:
@@ -226,8 +228,9 @@ class APIBase(unittest.TestCase, ABC):
         if test_method_name:
             var_specifier += f".{test_method_name}"
         var_specifier += f".{var_name}"
+        value = default
         try:
-            return os.environ[var_specifier]
+            value = os.environ[var_specifier]
         except:
             try:
                 # Tweak the var_specifier to that it tries the name of the super class (WebhookTestBase for BadWebhookTests)
@@ -236,20 +239,46 @@ class APIBase(unittest.TestCase, ABC):
                 if test_method_name:
                     var_specifier += f".{test_method_name}"
                 var_specifier += f".{var_name}"
-                return os.environ[var_specifier]
+                value = os.environ[var_specifier]
             except:
-                if default is not None:
-                    return default
-                raise
+                pass
+        if expected_type is int:
+            try:
+                return int(value)
+            except ValueError:
+                raise AssertionError(f"{value} could not be converted to int")
+        elif expected_type is bool:
+            try:
+                decoded_val = json.loads(value.lower())
+                if not isinstance(decoded_val, bool):
+                    raise ValueError(f"{value} could not be converted to bool")
+            except ValueError:
+                raise AssertionError(f"{value} could not be converted to bool")
 
     @classmethod
-    def _get_shared_env_var(cls, var_name: str, default: Optional[any] = None) -> any:
+    def _get_shared_env_var(cls,
+                            var_name: str,
+                            expected_type: Union[str, int, bool] = str,
+                            default: Optional[any] = None
+                            ) -> any:
+        value = default
         try:
             return os.environ[f"shared.{var_name}"]
         except:
-            if default is not None:
-                return default
-            raise
+            pass
+        if expected_type is int:
+            try:
+                return int(value)
+            except ValueError:
+                raise AssertionError(f"{value} could not be converted to int")
+        elif expected_type is bool:
+            try:
+                decoded_val = json.loads(value.lower())
+                if not isinstance(decoded_val, bool):
+                    raise ValueError(f"{value} could not be converted to bool")
+            except ValueError:
+                raise AssertionError(f"{value} could not be converted to bool")
+
 
     def tearDown(self) -> None:
         """
