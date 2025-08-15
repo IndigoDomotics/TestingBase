@@ -37,13 +37,14 @@ class APIBase(unittest.TestCase, ABC):
     via the HTTP API. It also provides some simplified methods to do common tasks.
     """
     # We define the logger class variable here so that we can access it both in normal methods as self.logger and in
-    # class methods as self.logger. We will actually get the logger and set attributes in the __init__ method.
+    # class methods as cls.logger. We will actually get the logger and set attributes in the __init__ method.
     logger: logging.Logger = None
 
     @classmethod
     def setUpClass(cls):
         """
-        These are things that are set up once for the class - any further instances created will share this stuff.
+        These are things that are set up once for the class - all tests will share this stuff and it will only get
+        called once for all tests.
 
         :return: None
         """
@@ -58,10 +59,10 @@ class APIBase(unittest.TestCase, ABC):
         # This is the ID of the plugin that is being tested - in case you want to restart it while testing
         cls.plugin_id: str = cls._get_shared_env_var("PLUGIN_ID")
         # If you do restart, do you want to restart it in the debugger?
-        cls.restart_plugin_in_debugger: bool = str_to_bool(cls._get_shared_env_var("RESTART_IN_DEBUGGER"))
+        cls.restart_plugin_in_debugger: bool = cls._get_shared_env_var("RESTART_IN_DEBUGGER", expected_type=bool)
         # When you restart, wait this many seconds before continuing. This will give the plugin enough time to get
         # fully started.
-        cls.wait_time: int = int(cls._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME"))
+        cls.wait_time: int = cls._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME", expected_type=int)
         # While print() statements work while running tests, using a logger is a better solution
 
     def __init__(self, methodName: str, env_path: str = ".env") -> None:
@@ -75,8 +76,11 @@ class APIBase(unittest.TestCase, ABC):
         super(APIBase, self).__init__(methodName)
         # Load the file containing the environment variables for the user's install
         dotenv.load_dotenv(env_path)
+        # Get the base class and set the logger to the logger variable - the one defined above.
         base_class = self.__class__.__bases__[0]
         base_class.logger = logging.getLogger(self.__class__.__name__)
+        # Now, self.logger is the same as __class__.logger so you can use that in the rest of the methods. If you
+        # define your own class methods, they should still have access via cls.logger.
         self.logger.addHandler(HANDLER)
         try:
             self.logger.setLevel(eval(self._get_shared_env_var("LOGGING_LEVEL")))
@@ -278,7 +282,6 @@ class APIBase(unittest.TestCase, ABC):
                     raise ValueError(f"{value} could not be converted to bool")
             except ValueError:
                 raise AssertionError(f"{value} could not be converted to bool")
-
 
     def tearDown(self) -> None:
         """

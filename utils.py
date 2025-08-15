@@ -35,7 +35,7 @@ return json.dumps(utils.str_to_bool('{val}'))
 """
     return json.loads(run_host_script(script))
 
-def reverse_bool_str_value(val: str) -> bool:
+def reverse_bool_str_value(val: str) -> str:
     """
     Return the opposite boolean string value of the supplied string. We call IPH3 to do the conversion so we're sure
     that the value is what the IOM would generate. The script encodes in JSON then unencodes the result is decoded
@@ -79,6 +79,6 @@ def run_host_script(script: str) -> str:
     )
     return result.stdout.decode("utf8").strip("\n")
 
-def within_time_tolerance(dt1, dt2, tolerance_seconds=1):
+def within_time_tolerance(dt1, dt2, tolerance_seconds=1) -> bool:
     """Check if two datetime objects are within specified seconds of each other"""
     return abs(dt1 - dt2) <= timedelta(seconds=tolerance_seconds)
