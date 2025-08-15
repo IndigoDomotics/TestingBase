@@ -109,10 +109,10 @@ def compare_dicts(
             datetime1 = dict1[key1]
             if not isinstance(datetime1, datetime):
                 # Assume ISO format string
-                datetime1 = datetime.isoformat(datetime1)
+                datetime1 = datetime.fromisoformat(datetime1)
             datetime2 = dict2[key2]
             if not isinstance(datetime2, datetime):
                 # Assume ISO format string
-                datetime2 = datetime.isoformat(datetime2)
+                datetime2 = datetime.fromisoformat(datetime2)
             are_equal = within_time_tolerance(datetime1, datetime2, tolerance)
     return are_equal
