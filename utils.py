@@ -108,6 +108,6 @@ def compare_dicts(
         # False since we don't need to do anything else.
         filtered_dict1 = {k: v for k, v in dict1.items() if k not in exclude_keys}
         filtered_dict2 = {k: v for k, v in dict2.items() if k not in exclude_keys}
-        return filtered_dict1 != filtered_dict2
+        return filtered_dict1 == filtered_dict2
     else:
         return dict1 == dict2
