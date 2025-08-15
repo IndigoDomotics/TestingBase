@@ -80,39 +80,34 @@ def run_host_script(script: str) -> str:
     )
     return result.stdout.decode("utf8").strip("\n")
 
-def within_time_tolerance(datetime1, datetime2, tolerance_seconds: int = 1) -> bool:
+def within_time_tolerance(datetime1, datetime2, tolerance_seconds: int = 1, raise_exc: bool = False) -> bool:
     """Check if two datetime objects are within specified seconds of each other"""
-    return abs(datetime1 - datetime2) <= timedelta(seconds=tolerance_seconds)
+    if not isinstance(datetime1, datetime):
+        datetime1 = datetime.fromisoformat(datetime1)
+    if not isinstance(datetime2, datetime):
+        datetime2 = datetime.fromisoformat(datetime2)
+    return_val = abs(datetime1 - datetime2) <= timedelta(seconds=tolerance_seconds)
+    if raise_exc:
+        raise AssertionError(datetime1, datetime2, "time comparison failed")
+    return return_val
 
 def compare_dicts(
         dict1: dict, dict2: dict,
-        exclude_keys: Optional[list] = None,
-        datetime_tolerance_list: Optional[list] = None) -> bool:
-    are_equal = True
+        exclude_keys: Optional[list] = None) -> bool:
+    """
+    This function checks if two dictionaries are equal. You can explicitly exclude certain keys and you can specify
+    a list of datetime instances and specify a time tolerance in seconds.
+    :param dict1: a dictionary, usually the dictionary that was generated through operations
+    :param dict2: a dictionary, usually one created manually for testing purposes which is the expected results
+    :param exclude_keys: a list of keys to exclude from comparison
+    :param datetime_tolerance_list: a list of field names to compare as datetime instances within a tolerance in seconds
+    :return: bool
+    """
     if exclude_keys is not None:
         # First, create two filtered versions of the dicts and compare - if they aren't the same we can just return
         # False since we don't need to do anything else.
         filtered_dict1 = {k: v for k, v in dict1.items() if k not in exclude_keys}
         filtered_dict2 = {k: v for k, v in dict2.items() if k not in exclude_keys}
-        if filtered_dict1 != filtered_dict2:
-            return False
-    # If the filtered dicts are the same, then we want to cycle through the datetime tolerance map and convert and
-    # compare them. Each entry in the map is something like this:
-    #   ("timestamp", "some_other_datetime", 1)
-    # The value in dict1 with the appropriate key should match the value in dict2 with the key within the specified
-    # using tolerance in seconds. In the above example, this call will be made:
-    #    within_time_tolerance(dict1["timestamp"], dict2["some_other_datetime"], 1)
-    # If either of the values from the dicts are strings, I'll assume that they are ISO format and will use
-    # datetime.fromisoformat(value) to attempt a conversion first.
-    if datetime_tolerance_list is not None:
-        for key1, key2, tolerance in datetime_tolerance_list:
-            datetime1 = dict1[key1]
-            if not isinstance(datetime1, datetime):
-                # Assume ISO format string
-                datetime1 = datetime.fromisoformat(datetime1)
-            datetime2 = dict2[key2]
-            if not isinstance(datetime2, datetime):
-                # Assume ISO format string
-                datetime2 = datetime.fromisoformat(datetime2)
-            are_equal = within_time_tolerance(datetime1, datetime2, tolerance)
-    return are_equal
+        return filtered_dict1 != filtered_dict2
+    else:
+        return dict1 == dict2
