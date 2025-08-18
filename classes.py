@@ -8,6 +8,8 @@ import json
 from typing import Optional, Union, Type
 from abc import ABC
 
+from fontTools.misc.cython import returns
+
 try:
     import dotenv
 except ModuleNotFoundError:
@@ -154,10 +156,12 @@ class APIBase(unittest.TestCase, ABC):
                           endpoint: str,
                           obj_id: int = False,
                           bearer_token: str = None,
-                          timeout: float = DEFAULT_TIMEOUT) -> httpx.Response:
+                          expected_status_code: int = 200,
+                          timeout: float = DEFAULT_TIMEOUT) -> Union[dict, list, httpx.Response]:
         """
         Make httpx.get call to retrieve object props
 
+        :param expected_status_code:
         :param endpoint: devices, variables, actionGroups, etc.
         :param obj_id: id of object to retrieve [optional]
         :param bearer_token: the API key to use for communication, will use self.api_key by default [optional]
@@ -172,13 +176,16 @@ class APIBase(unittest.TestCase, ABC):
             # get a specific object
             url += f"/{obj_id}"
         response = httpx.get(url, headers=headers, verify=False, timeout=timeout)
-        if response.status_code != 200:
-            raise AssertionError(response.status_code, 200, f"error getting indigo object: {response.text}")
+        if response.status_code != expected_status_code:
+            raise AssertionError(response.status_code, expected_status_code, f"error getting indigo object: {response.text}")
         try:
-            indigo_object = response.json()
+            if response.status_code == 200:
+                return_object = response.json()
+            else:
+                return_object = None
         except json.decoder.JSONDecodeError:
             raise AssertionError(f"error decoding indigo object: {response.text}")
-        return response
+        return return_object
 
     @classmethod
     def send_webhook(cls,
