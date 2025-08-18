@@ -172,6 +172,12 @@ class APIBase(unittest.TestCase, ABC):
             # get a specific object
             url += f"/{obj_id}"
         response = httpx.get(url, headers=headers, verify=False, timeout=timeout)
+        if response.status_code != 200:
+            raise AssertionError(response.status_code, 200, f"error getting indigo object: {response.text}")
+        try:
+            indigo_object = response.json()
+        except json.decoder.JSONDecodeError:
+            raise AssertionError(f"error decoding indigo object: {response.text}")
         return response
 
     @classmethod
