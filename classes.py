@@ -5,10 +5,8 @@ import time
 import unittest
 import enum
 import json
-from typing import Optional, Union, Type
+from typing import Optional, Union, Type, Any
 from abc import ABC
-
-from fontTools.misc.cython import returns
 
 try:
     import dotenv
@@ -20,7 +18,7 @@ try:
 except ModuleNotFoundError:
     print("you must have httpx installed")
 
-from .utils import get_install_folder, str_to_bool, HANDLER
+from .utils import get_install_folder, HANDLER
 
 DEFAULT_TIMEOUT = 5.0  # This is the default for httpx
 
@@ -142,7 +140,7 @@ class APIBase(unittest.TestCase, ABC):
         :param timeout: timeout in seconds as a float
         :return response: httpx.Response object
         """
-        message_dict = {
+        message_dict: dict = {
             "id": message_id,
             "message": message,
             "objectId": int(object_id)
@@ -236,7 +234,7 @@ class APIBase(unittest.TestCase, ABC):
                               test_method_name: Optional[str] = None,
                               expected_type: Union[Type[str], Type[int], Type[bool]] = str,
                               default: Optional[any] = None
-                              ) -> any:
+                              ) -> Any:
         if not module:
             module = cls.__module__
         if not test_case_name:
@@ -271,13 +269,14 @@ class APIBase(unittest.TestCase, ABC):
                     raise ValueError(f"{value} could not be converted to bool")
             except ValueError:
                 raise AssertionError(f"{value} could not be converted to bool")
+        return value
 
     @classmethod
     def _get_shared_env_var(cls,
                             var_name: str,
                             expected_type: Union[Type[str], Type[int], Type[bool]] = str,
                             default: Optional[any] = None
-                            ) -> any:
+                            ) -> Any:
         value = default
         try:
             return os.environ[f"shared.{var_name}"]
@@ -295,6 +294,7 @@ class APIBase(unittest.TestCase, ABC):
                     raise ValueError(f"{value} could not be converted to bool")
             except ValueError:
                 raise AssertionError(f"{value} could not be converted to bool")
+        return value
 
     def tearDown(self) -> None:
         """
