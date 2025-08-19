@@ -202,9 +202,11 @@ class APIBase(unittest.TestCase, ABC):
             raise AssertionError(reply.text, "status reply code was not 200")
         reply_dict = reply.json()
         # Confirm that the API response is a dict
-        cls.assertIsInstance(reply_dict, dict, msg="returned value should be a dict")
+        if not isinstance(reply_dict, dict):
+            raise AssertionError(reply_dict, "reply was not a dict")
         # And that it was successful
-        cls.assertIn("success", reply_dict, msg="returned dict should contain 'success'")
+        if "success" not in reply_dict:
+            raise AssertionError(reply_dict, "returned dict should contain 'success'")
         return reply
 
     @classmethod
