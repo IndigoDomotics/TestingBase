@@ -186,6 +186,28 @@ class APIBase(unittest.TestCase, ABC):
         return return_object
 
     @classmethod
+    def set_variable(cls, message_id: str, variable: Union[int, str, dict], new_value: str = "") -> httpx.Response:
+        # if they passed in an int, we assume it's a good variable ID. If you pass in a string, try to turn it into an
+        # int. If you pass in a dict (after getting the full device dict from the API) then we get the ID
+        # out of the dict.
+        if isinstance(variable, dict):
+            object_id = int(variable["id"])
+        elif isinstance(variable, str):
+            object_id = int(variable)
+        else:
+            object_id = variable
+        message = "indigo.variable.updateValue"
+        reply = cls.send_simple_command(message_id, message, object_id, parameters={"value": new_value})
+        if reply.status_code not in range(200, 299):
+            raise AssertionError(reply.text, "status reply code was not 200")
+        reply_dict = reply.json()
+        # Confirm that the API response is a dict
+        cls.assertIsInstance(reply_dict, dict, msg="returned value should be a dict")
+        # And that it was successful
+        cls.assertIn("success", reply_dict, msg="returned dict should contain 'success'")
+        return reply
+
+    @classmethod
     def send_webhook(cls,
                      message_dict: dict,
                      webhook_id: str,
