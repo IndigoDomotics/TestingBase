@@ -308,7 +308,7 @@ class APIBase(unittest.TestCase, ABC):
                             ) -> Any:
         value = default
         try:
-            return os.environ[f"shared.{var_name}"]
+            value = os.environ[f"shared.{var_name}"]
         except:
             pass
         if expected_type is int:
