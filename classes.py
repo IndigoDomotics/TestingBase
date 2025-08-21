@@ -256,7 +256,7 @@ class APIBase(unittest.TestCase, ABC):
                               module: Optional[str] = None,
                               test_case_name: Optional[str] = None,
                               test_method_name: Optional[str] = None,
-                              expected_type: Union[Type[str], Type[int], Type[bool]] = str,
+                              expected_type: Union[Type[str], Type[int], Type[float], Type[bool]] = str,
                               default: Optional[any] = None
                               ) -> Any:
         if not module:
@@ -286,6 +286,11 @@ class APIBase(unittest.TestCase, ABC):
                 return int(value)
             except ValueError:
                 raise AssertionError(f"{value} could not be converted to int")
+        elif expected_type is float:
+            try:
+                return float(value)
+            except ValueError:
+                raise AssertionError(f"{value} could not be converted to float")
         elif expected_type is bool:
             try:
                 decoded_val = json.loads(value.lower())
@@ -298,7 +303,7 @@ class APIBase(unittest.TestCase, ABC):
     @classmethod
     def _get_shared_env_var(cls,
                             var_name: str,
-                            expected_type: Union[Type[str], Type[int], Type[bool]] = str,
+                            expected_type: Union[Type[str], Type[int], Type[float], Type[bool]] = str,
                             default: Optional[any] = None
                             ) -> Any:
         value = default
@@ -311,6 +316,11 @@ class APIBase(unittest.TestCase, ABC):
                 return int(value)
             except ValueError:
                 raise AssertionError(f"{value} could not be converted to int")
+        elif expected_type is float:
+            try:
+                return float(value)
+            except ValueError:
+                raise AssertionError(f"{value} could not be converted to float")
         elif expected_type is bool:
             try:
                 decoded_val = json.loads(value.lower())
