@@ -117,3 +117,18 @@ The `utils.py` file has some useful functions in it:
     and return if they are within the specified tolerance_seconds. Useful because we pass through the event timestamp
     in all event data, so if you want to test a known payload on the action side you can use `datetime.now()` and then
     compare it to the timestamp passed through to help with that testing.
+
+#### Troubleshooting
+
+Here are some random things to help you troubleshoot if you run into problems.
+
+  - If you get some nonsense about detached head in a project that uses this submodule, it perhaps means that you 
+    accidentally did a `git add` on the `tests/shared` directory. You shouldn't do that since this is a submodule and git 
+    will get confused if you try to actually add it. So just do a `git reset tests/shared` and that should remove it from
+    the git commit list. 
+  - Another thing to look for, particularly if **PyCharm is showing red** in the Git window: 
+    Open the PyCharm settings and select the Version Control-> Directory Mappings to make sure that the test/shared 
+    mapping is not there (it may show as unmapped, and thats OK). If `tests/shared` is listed as a separate git root, 
+    **delete it**. There should only be the main project mapping in the list. PyCharm seems to want to automatically add 
+    this mapping unexpectedly, so if you see a red dot in the commit window and/or a red line in the git log window,
+    you should check this.
