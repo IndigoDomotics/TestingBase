@@ -14,10 +14,11 @@ For example, in Terminal run this test with:
     > cd <path/to/repo/root/>
     > python -m unittest tests.test_xml
 """
-from indigo_devices_filters import DEVICE_FILTERS
-from httpcodes import CODES as HTTPCODES
-import httpx
 import os
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+from .constants import HTTP_CODES, DEVICE_FILTERS
+import httpx
 import xml.etree.ElementTree as ET  # noqa
 from classes import APIBase
 import dotenv
@@ -104,7 +105,7 @@ class TestXml(APIBase):
                     self.assertIsInstance(thing.text, str, "Config UI support URLs must be strings.")
                     result = httpx.get(thing.text).status_code
                     self.assertEqual(result, 200,
-                                     f"ERROR: Got status code {result} -> {HTTPCODES[result]}.")
+                                     f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
 
                 # Test Config UI `Field` elements
                 for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/Field"):

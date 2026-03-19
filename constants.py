@@ -1,20 +1,6 @@
-"""
-curlcodes.py
 
-Usage: from curlcodes import CODES as CURL_CODES
 
-Import into test files as needed and reference curl code message as a standard dict.  I.e.,
-
-    code = CURL_CODES.get('-99', "Unknown code.")
-    self.logger.warning(code)
-
-These codes should allow for more human-friendly logging for testing output.
-
-2021-01-03 DaveL17 Note that these codes and their corresponding error messages were lifted from the curl man page
-dated 2016-11-16.
-"""
-
-CODES = {
+CURL_CODES = {
     "1": "Unsupported protocol. This build of curl has no support for this protocol.",
     "2": "Failed to initialize.",
     "3": "URL malformed. The syntax was not correct.",
@@ -112,3 +98,85 @@ CODES = {
     "92": "Stream error in HTTP/2 framing layer.",
     "-9": "Unknown code message."
 }
+
+HTTP_CODES = {
+    100: "Continue",
+    101: "Switching Protocols",
+    102: "Processing (WebDAV; RFC 2518)",
+    103: "Early Hints (RFC 8297)",
+    200: "OK",
+    201: "Created",
+    202: "Accepted",
+    203: "Non-Authoritative Information (since HTTP/1.1)",
+    204: "No Content",
+    205: "Reset Content",
+    206: "Partial Content",
+    207: "Multi-Status (WebDAV; RFC 4918)",
+    208: "Already Reported (WebDAV; RFC 5842)",
+    226: "IM Used (RFC 3229)",
+    300: "Multiple Choices",
+    301: "Moved Permanently",
+    302: 'Found (Previously "Moved temporarily")',
+    303: "See Other (since HTTP/1.1)",
+    304: "Not Modified",
+    305: "Use Proxy (since HTTP/1.1)",
+    306: "Switch Proxy",
+    307: "Temporary Redirect (since HTTP/1.1)",
+    308: "Permanent Redirect",
+    400: "Bad Request",
+    401: "Unauthorized",
+    402: "Payment Required",
+    403: "Forbidden",
+    404: "Not Found",
+    405: "Method Not Allowed",
+    406: "Not Acceptable",
+    407: "Proxy Authentication Required",
+    408: "Request Timeout",
+    409: "Conflict",
+    410: "Gone",
+    411: "Length Required",
+    412: "Precondition Failed",
+    413: "Payload Too Large",
+    414: "URI Too Long",
+    415: "Unsupported Media Type",
+    416: "Range Not Satisfiable",
+    417: "Expectation Failed",
+    418: "I'm a teapot (RFC 2324, RFC 7168)",
+    421: "Misdirected Request",
+    422: "Unprocessable Entity",
+    423: "Locked (WebDAV; RFC 4918)",
+    424: "Failed Dependency (WebDAV; RFC 4918)",
+    425: "Too Early (RFC 8470)",
+    426: "Upgrade Required",
+    428: "Precondition Required (RFC 6585)",
+    429: "Too Many Requests (RFC 6585)",
+    431: "Request Header Fields Too Large (RFC 6585)",
+    451: "Unavailable For Legal Reasons (RFC 7725)",
+    500: "Internal Server Error",
+    501: "Not Implemented",
+    502: "Bad Gateway",
+    503: "Service Unavailable",
+    504: "Gateway Timeout",
+    505: "HTTP Version Not Supported",
+    506: "Variant Also Negotiates (RFC 2295)",
+    507: "Insufficient Storage (WebDAV; RFC 4918)",
+    508: "Loop Detected (WebDAV; RFC 5842)",
+    510: "Not Extended (RFC 2774)",
+    511: "Network Authentication Required (RFC 6585)",
+}
+
+DEVICE_FILTERS = [
+    "indigo.controller",  # include devices that can send commands
+    "indigo.dimmer",      # dimmer devices
+    "indigo.insteon",     # include INSTEON devices - this is an interface filter that can be used with other filters
+    "indigo.iodevice",    # input/output devices
+    "indigo.relay",       # relay devices
+    "indigo.responder",   # include devices whose state can be changed
+    "indigo.sensor",      # all sensor type devices that have a virtual state in Indigo
+    "indigo.sprinkler",   # sprinklers
+    "indigo.thermostat",  # thermostats
+    "indigo.x10",         # include X10 devices - this is an interface filter that can be used with other filters
+    "indigo.zwave",       # include Z-Wave devices - this is an interface filter that can be used with other filters
+    "self",               # all device types defined by the calling plugin
+]
+
