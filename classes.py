@@ -341,3 +341,9 @@ class APIBase(unittest.TestCase, ABC):
         self.logger.info("...Tearing down test")
         # We add this little sleep to make sure that all test logging happens before the test result summary is shown
         time.sleep(1)
+
+
+class TestXml(APIBase, ABC):
+    server_plugin_dir_path = ""  # path should NOT end in a /
+    file_name = ""  # file name shouldn't begin with a /
+
