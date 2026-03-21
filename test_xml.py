@@ -28,7 +28,7 @@ dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 BASE_PATH = os.getenv('BASE_PATH')
 
 
-class TestXml(APIBase):
+class TestXml(TestXml):
     """
     The TestXml class is used to test the various XML files that are part of a standard Indigo plugin.
 
