@@ -103,7 +103,7 @@ class TestXml(TestXml):
                 # Test items that have a 'configUI' element
                 for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/SupportURL"):
                     self.assertIsInstance(thing.text, str, "Config UI support URLs must be strings.")
-                    result = httpx.get(thing.text).status_code
+                    result = httpx.get(thing.text, timeout=10).status_code
                     self.assertEqual(result, 200,
                                      f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
 
