@@ -37,7 +37,7 @@ class TestXml(TestXml):
     """
     @classmethod
     def setUpClass(cls):
-        cls.xml_files   = [f'{BASE_PATH}/Actions.xml', f'{BASE_PATH}/MenuItems.xml', f'{BASE_PATH}/Devices.xml', f'{BASE_PATH}/Events.xml']
+        cls.xml_files   = [f'{BASE_PATH}/Actions.xml', f'{BASE_PATH}/MenuItems.xml', f'{BASE_PATH}/Devices.xml', f'{BASE_PATH}/Events.xml', f'{BASE_PATH}/PluginConfig.xml']
         cls.field_types = ['button', 'checkbox', 'colorpicker', 'label', 'list', 'menu', 'separator', 'textfield']
         # Load the plugin.py code into a var for testing later.
         with open(f'{BASE_PATH}/plugin.py', 'r') as infile:
