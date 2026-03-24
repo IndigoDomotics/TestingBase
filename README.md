@@ -98,7 +98,7 @@ This is another base class that will allow you to validate the various XML files
 is really easy:
 
 ```aiignore
-    class TestActionsXml(TestXmlBase):
+    class TestActionsXml(ValidateXmlFile, APIBase):
         # path should NOT end in a / and file name should NOT begin with a /
         server_plugin_dir_path = "/some/path/MyPlugin.indigoPlugin/Contents/Server Folder"
         file_name = "Actions.xml"

@@ -345,7 +345,7 @@ class APIBase(unittest.TestCase, ABC):
         # We add this little sleep to make sure that all test logging happens before the test result summary is shown
         time.sleep(1)
 
-class TestXmlBase(APIBase, ABC):
+class ValidateXmlFile(ABC):
     """
     The TestXml class is a base class used to test the various XML files that are part of a standard Indigo plugin.
 
