@@ -347,12 +347,12 @@ class APIBase(unittest.TestCase, ABC):
 
 class ValidateXmlFile(ABC):
     """
-    The TestXml class is a base class used to test the various XML files that are part of a standard Indigo plugin.
+    The ValidateXmlFile class is a base class used to test the various XML files that are part of a standard Indigo plugin.
 
     The tests include checks for required elements (like element `id` and `type` attributes) and syntax. To use this
     class,you simply define a class in your test file like this:
 
-    class TestActionsXml(TestXmlBase):
+    class TestActionsXml(ValidateXmlFile, APIBase):  # NOTE: order is important here, APIBase must be the second class
         # path should NOT end in a / and file name should NOT begin with a /
         server_plugin_dir_path = "/some/path/MyPlugin.indigoPlugin/Contents/Server Folder"
         file_name = "Actions.xml"
@@ -360,9 +360,34 @@ class ValidateXmlFile(ABC):
     """
     server_plugin_dir_path: str = ""
     file_name: str = ""
+    logger: logging.Logger = None
+
+    def __init__(self, methodName: str, env_path: str = ".env") -> None:
+        """
+        Init for the base class.
+
+        :param methodName: the method name to run
+        :param env_path: the path to the .env file, by default we'll just look in the current working directory
+        :return: None
+        """
+        super(ValidateXmlFile, self).__init__(methodName)
+        # Load the file containing the environment variables for the user's install
+        dotenv.load_dotenv(env_path)
+        # Get the base class and set the logger to the logger variable - the one defined above.
+        base_class = self.__class__.__bases__[1]
+        base_class.logger = logging.getLogger(self.__class__.__name__)
+        # Now, self.logger is the same as __class__.logger so you can use that in the rest of the methods. If you
+        # define your own class methods, they should still have access via cls.logger.
+        self.logger.addHandler(HANDLER)
+        # will work when inhertiting from APIBase
+        try:
+            self.logger.setLevel(eval(self._get_shared_env_var("LOGGING_LEVEL")))
+        except:
+            self.logger.setLevel(logging.INFO)
 
     @classmethod
     def setUpClass(cls):
+        cls.logger.info("...Setting up test")
         # First, make sure all the various file system paths are correct.
         if not os.path.exists(cls.server_plugin_dir_path):
             raise AssertionError(f"Plugin directory not found: {cls.server_plugin_dir_path}")
