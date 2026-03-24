@@ -1,11 +1,12 @@
 """
 Stuff that's shared across all the various tests.
 """
-import logging
-import sys
-import subprocess
-import pathlib
 import json
+import logging
+import pathlib
+import subprocess
+import sys
+import warnings
 from datetime import timedelta, datetime
 from typing import Optional
 
@@ -111,3 +112,7 @@ def compare_dicts(
         return filtered_dict1 == filtered_dict2
     else:
         return dict1 == dict2
+
+
+class SoftAssertionWarning(UserWarning):
+    pass
