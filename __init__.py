@@ -5,7 +5,7 @@ from shared import APIBase
 from shared.utils import within_time_tolerance
 """
 # Classes
-from .classes import APIBase, WebhookStatusCode, TestXmlBase
+from .classes import APIBase, WebhookStatusCode, ValidateXmlFile
 
 # Constants
 from .constants import HTTP_CODES, CURL_CODES, DEVICE_FILTERS, DIALOG_FIELD_TYPES
