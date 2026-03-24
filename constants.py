@@ -1,4 +1,14 @@
+"""
+A collection of mappings for CURL error codes and HTTP status codes.
 
+This module defines dictionaries to map CURL error codes and HTTP status codes
+to their corresponding descriptive messages. These mappings can be used for
+logging, debugging, or to provide user-friendly error information in applications.
+
+Variables:
+    CURL_CODES (dict): Maps CURL error codes (str) to their descriptive messages (str).
+    HTTP_CODES (dict): Maps HTTP status codes (int) to their descriptive messages (str).
+"""
 
 CURL_CODES = {
     "1": "Unsupported protocol. This build of curl has no support for this protocol.",
@@ -180,3 +190,14 @@ DEVICE_FILTERS = [
     "self",               # all device types defined by the calling plugin
 ]
 
+DIALOG_FIELD_TYPES = [
+    'button',
+    'checkbox',
+    'colorpicker',
+    'label',
+    'list',
+    'menu',
+    'separator',
+    'textfield',
+    'serialport'
+]

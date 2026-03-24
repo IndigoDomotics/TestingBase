@@ -1,12 +1,16 @@
 import logging
 import os
 import subprocess
+import sys
 import time
 import unittest
 import enum
 import json
 from typing import Optional, Union, Type, Any
 from abc import ABC
+from xml.etree import ElementTree as ET
+
+from .constants import DEVICE_FILTERS, DIALOG_FIELD_TYPES, HTTP_CODES
 
 try:
     import dotenv
@@ -29,7 +33,6 @@ class WebhookStatusCode(enum.IntEnum):
     BAD_METHOD = 405  # Webhook using a method other than what was configured
     SERVER_ERROR = 500  # Unexpected exception happened during processing - will write error and stack trace to log
     DISABLED = 503  # Webhook ID exists but is disabled
-
 
 class APIBase(unittest.TestCase, ABC):
     """
@@ -342,8 +345,124 @@ class APIBase(unittest.TestCase, ABC):
         # We add this little sleep to make sure that all test logging happens before the test result summary is shown
         time.sleep(1)
 
+class TestXmlBase(APIBase, ABC):
+    """
+    The TestXml class is a base class used to test the various XML files that are part of a standard Indigo plugin.
 
-class TestXml(APIBase, ABC):
-    server_plugin_dir_path = ""  # path should NOT end in a /
-    file_name = ""  # file name shouldn't begin with a /
+    The tests include checks for required elements (like element `id` and `type` attributes) and syntax. To use this
+    class,you simply define a class in your test file like this:
 
+    class TestActionsXml(TestXmlBase):
+        # path should NOT end in a / and file name should NOT begin with a /
+        server_plugin_dir_path = "/some/path/MyPlugin.indigoPlugin/Contents/Server Folder"
+        file_name = "Actions.xml"
+
+    """
+    server_plugin_dir_path: str = ""
+    file_name: str = ""
+
+    @classmethod
+    def setUpClass(cls):
+        # First, make sure all the various file system paths are correct.
+        if not os.path.exists(cls.server_plugin_dir_path):
+            raise AssertionError(f"Plugin directory not found: {cls.server_plugin_dir_path}")
+        cls.plugin_file_path = f"{cls.server_plugin_dir_path}/plugin.py"
+        if not os.path.exists(cls.plugin_file_path):
+            raise AssertionError(f"plugin.py not found in: {cls.server_plugin_dir_path}")
+        cls.full_path = f"{cls.server_plugin_dir_path}/{cls.file_name}"
+        if not os.path.exists(cls.full_path):
+            raise AssertionError(f"File not found: {cls.full_path}")
+        # Load the plugin.py code into a var for testing later.
+        try:
+            with open(cls.plugin_file_path, 'r') as infile:
+                cls.plugin_lines = infile.read()
+        except:
+            raise AssertionError(f"Could not read plugin.py file: {cls.plugin_file_path}, error:\n{sys.exc_info()}")
+
+    @staticmethod
+    def get_item_name(xml_file: str):
+        tree = ET.parse(xml_file)
+        return tree.getroot()
+
+    def test_xml_file(self):
+        # Get the base element type, which is the name of the file without the .xml extension.
+        element_type = self.file_name.split(".")[0]
+        root = self.get_item_name(self.full_path)
+        for item in root:
+            # SupportURLs don't have `id` attributes. We cast the attribute in a list in case other tags don't
+            # include IDs later on.
+            if item.tag not in ["SupportURL"]:
+                # Test the 'id' attribute (required):
+                node_id = item.get('id')
+                self.assertIsNotNone(node_id,
+                                     f"\"{element_type}\" element \"{item.tag}\" attribute 'id' is required.")
+                self.assertIsInstance(node_id, str, "id names must be strings.")
+                self.assertFalse(any(c.isspace() for c in node_id), "`id` names should not contain spaces.")
+
+            # Test the 'deviceFilter' attribute:
+            dev_filter = item.get('deviceFilter', "")
+            self.assertIsInstance(dev_filter, str, "`deviceFilter` values must be strings.")
+            if dev_filter:  # None if not specified in item attributes
+                # Filters may be compound (comma-separated), and each component may be a known static
+                # filter or a dynamic filter using dot notation (e.g. `props.isChart`, `self.devTypeId`).
+                components = [c.strip() for c in dev_filter.split(",")]
+                for component in components:
+                    is_static = component in DEVICE_FILTERS
+                    is_dynamic = "." in component
+                    self.assertTrue(
+                        is_static or is_dynamic,
+                        f"'{component}' not found in {sorted(DEVICE_FILTERS)} : 'deviceFilter' values must be strings."
+                    )
+
+            # Test the 'uiPath' attribute. It can be essentially anything as long as it's a string.
+            ui_path = item.get('uiPath', "")
+            self.assertIsInstance(ui_path, str, "uiPath names must be strings.")
+
+        # Test items that have a 'Name' element. The reference to `root.tag[:-1]` takes the tag name and
+        # converts it to the appropriate child element name. For example, `Actions` -> `Action`, etc.
+        for thing in root.findall(f"./{root.tag[:-1]}/Name"):
+            self.assertIsInstance(thing.text, str, "Action names must be strings.")
+
+        # Test items that have a `CallBackMethod` element:
+        for thing in root.findall(f"./{root.tag[:-1]}/CallbackMethod"):
+            self.assertIsInstance(thing.text, str, "Action callback names must be strings.")
+            # We can't directly access the plugin.py file from here, so we read it into a variable instead.
+            # We then search for the string `def <CALLBACK METHOD>` within the file as a proxy to doing a
+            # `dir()` to see if it's in there.
+            self.assertTrue(f"def {thing.text}" in self.plugin_lines,
+                            f"The callback method \"{thing.text}\" does not exist in the plugin.py file.")
+
+        # Test items that have a 'configUI' element
+        for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/SupportURL"):
+            self.assertIsInstance(thing.text, str, "Config UI support URLs must be strings.")
+            result = httpx.get(thing.text, timeout=10).status_code
+            self.assertEqual(result, 200,
+                             f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
+
+        # Test Config UI `Field` elements
+        for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/Field"):
+            # Required attributes. Will throw a KeyError if missing.
+            self.assertIsInstance(thing.attrib['id'], str, "Config UI field IDs must be strings.")
+            self.assertFalse(thing.attrib['id'] == "", "Config UI field IDs must not be an empty string.")
+            self.assertIsInstance(thing.attrib['type'], str, "Config UI field types must be strings.")
+            self.assertIn(thing.attrib['type'], DIALOG_FIELD_TYPES,
+                          f"Config UI field types must be one of {DIALOG_FIELD_TYPES}.")
+            # Optional attributes
+            self.assertIsInstance(thing.attrib.get('defaultValue', ""), str,
+                                  "Config UI defaultValue types must be strings.")
+            self.assertIsInstance(thing.attrib.get('enabledBindingId', ""), str,
+                                  "Config UI enabledBindingId types must be strings.")
+            self.assertIsInstance(thing.attrib.get('enabledBindingNegate', ""), str,
+                                  "Config UI enabledBindingNegate types must be strings.")
+            self.assertIn(thing.attrib.get('hidden', "false"), ['true', 'false'],
+                          "Config UI hidden attribute must be 'true' or 'false'.")
+            self.assertIn(thing.attrib.get('readonly', "false"), ['true', 'false'],
+                          "Config UI readonly attribute must be 'true' or 'false'.")
+            self.assertIn(thing.attrib.get('secure', "false"), ['true', 'false'],
+                          "Config UI secure attribute must be 'true' or 'false'.")
+            self.assertIsInstance(thing.attrib.get('tooltip', ""), str,
+                                  "Config UI field tool tips must be strings.")
+            self.assertIsInstance(thing.attrib.get('visibleBindingId', ""), str,
+                                  "Config UI visibleBindingId types must be strings.")
+            self.assertIsInstance(thing.attrib.get('visibleBindingValue', ""), str,
+                                  "Config UI visibleBindingValue types must be strings.")
