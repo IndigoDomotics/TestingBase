@@ -387,7 +387,7 @@ class ValidateXmlFile(ABC):
 
     @classmethod
     def setUpClass(cls):
-        cls.logger.info("...Setting up test")
+        cls.logger.info("Setting up ValidateXmlFile subclass")
         # First, make sure all the various file system paths are correct.
         if not os.path.exists(cls.server_plugin_dir_path):
             raise AssertionError(f"Plugin directory not found: {cls.server_plugin_dir_path}")
@@ -416,6 +416,7 @@ class ValidateXmlFile(ABC):
         for item in root:
             # SupportURLs don't have `id` attributes. We cast the attribute in a list in case other tags don't
             # include IDs later on.
+            self.logger.info(f"Testing {element_type} element: {item.tag}")
             if item.tag not in ["SupportURL"]:
                 # Test the 'id' attribute (required):
                 node_id = item.get('id')
@@ -425,6 +426,7 @@ class ValidateXmlFile(ABC):
                 self.assertFalse(any(c.isspace() for c in node_id), "`id` names should not contain spaces.")
 
             # Test the 'deviceFilter' attribute:
+            self.logger.info(f"Validating deviceFilter")
             dev_filter = item.get('deviceFilter', "")
             self.assertIsInstance(dev_filter, str, "`deviceFilter` values must be strings.")
             if dev_filter:  # None if not specified in item attributes
@@ -440,15 +442,18 @@ class ValidateXmlFile(ABC):
                     )
 
             # Test the 'uiPath' attribute. It can be essentially anything as long as it's a string.
+            self.logger.info(f"Validating uiPath")
             ui_path = item.get('uiPath', "")
             self.assertIsInstance(ui_path, str, "uiPath names must be strings.")
 
         # Test items that have a 'Name' element. The reference to `root.tag[:-1]` takes the tag name and
         # converts it to the appropriate child element name. For example, `Actions` -> `Action`, etc.
+        self.logger.info(f"Validating Name elements")
         for thing in root.findall(f"./{root.tag[:-1]}/Name"):
             self.assertIsInstance(thing.text, str, "Action names must be strings.")
 
         # Test items that have a `CallBackMethod` element:
+        self.logger.info(f"Validating CallBackMethod elements")
         for thing in root.findall(f"./{root.tag[:-1]}/CallbackMethod"):
             self.assertIsInstance(thing.text, str, "Action callback names must be strings.")
             # We can't directly access the plugin.py file from here, so we read it into a variable instead.
@@ -458,6 +463,7 @@ class ValidateXmlFile(ABC):
                             f"The callback method \"{thing.text}\" does not exist in the plugin.py file.")
 
         # Test items that have a 'configUI' element
+        self.logger.info(f"Validating configUI elements")
         for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/SupportURL"):
             self.assertIsInstance(thing.text, str, "Config UI support URLs must be strings.")
             result = httpx.get(thing.text, timeout=10).status_code
@@ -465,6 +471,7 @@ class ValidateXmlFile(ABC):
                              f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
 
         # Test Config UI `Field` elements
+        self.logger.info(f"Validating Field elements")
         for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/Field"):
             # Required attributes. Will throw a KeyError if missing.
             self.assertIsInstance(thing.attrib['id'], str, "Config UI field IDs must be strings.")
