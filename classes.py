@@ -371,22 +371,20 @@ class ValidateXmlFile(ABC):
         :return: None
         """
         super(ValidateXmlFile, self).__init__(methodName)
-        # Load the file containing the environment variables for the user's install
-        dotenv.load_dotenv(env_path)
         # Get the base class and set the logger to the logger variable - the one defined above.
-        base_class = self.__class__.__bases__[1]
-        base_class.logger = logging.getLogger(self.__class__.__name__)
-        # Now, self.logger is the same as __class__.logger so you can use that in the rest of the methods. If you
-        # define your own class methods, they should still have access via cls.logger.
-        self.logger.addHandler(HANDLER)
-        # will work when inhertiting from APIBase
-        try:
-            self.logger.setLevel(eval(self._get_shared_env_var("LOGGING_LEVEL")))
-        except:
-            self.logger.setLevel(logging.INFO)
 
     @classmethod
     def setUpClass(cls):
+        api_base_class = cls.__class__.__bases__[1]
+        api_base_class.logger = logging.getLogger(cls.__class__.__name__)
+        # Now, self.logger is the same as __class__.logger so you can use that in the rest of the methods. If you
+        # define your own class methods, they should still have access via cls.logger.
+        cls.logger.addHandler(HANDLER)
+        # will work when inhertiting from APIBase
+        try:
+            cls.logger.setLevel(eval(api_base_class._get_shared_env_var("LOGGING_LEVEL")))
+        except:
+            cls.logger.setLevel(logging.INFO)
         cls.logger.info("Setting up ValidateXmlFile subclass")
         # First, make sure all the various file system paths are correct.
         if not os.path.exists(cls.server_plugin_dir_path):
