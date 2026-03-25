@@ -451,7 +451,7 @@ class ValidateXmlFile(ABC):
         for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/SupportURL"):
             self.assertIsInstance(thing.text, str, "Config UI support URLs must be strings.")
             result = httpx.get(thing.text, timeout=10).status_code
-            self.assertIn(result, self.acceptable_return_codes,
+            self.assertIn(result, self.additional_http_return_codes,
                           f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
 
         # Test Config UI `Field` elements
