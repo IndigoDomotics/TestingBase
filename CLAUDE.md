@@ -73,6 +73,7 @@ class TestActionsXml(ValidateXmlFile, APIBase):  # ValidateXmlFile must be first
 **Class variables to set:**
 - `server_plugin_dir_path` — path to the plugin's Server Folder (no trailing slash)
 - `file_name` — XML file name (no leading slash)
+- `additional_http_return_codes` *(optional)* — list of extra HTTP status codes to accept when validating `SupportURL` elements; default set is 200–208; values in this list are added to that set
 
 **Setup flow:**
 1. `setUpClass` verifies the plugin dir, `plugin.py`, and XML file all exist; loads `plugin.py` content into `cls.plugin_lines`

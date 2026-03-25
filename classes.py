@@ -362,28 +362,8 @@ class ValidateXmlFile(ABC):
     """
     server_plugin_dir_path: str = ""
     file_name: str = ""
+    additional_http_return_codes: list = list()
     logger: logging.Logger = None
-
-    def __init__(self, methodName: str, env_path: str = ".env") -> None:
-        """
-        Init for the base class.
-
-        :param methodName: the method name to run
-        :param env_path: the path to the .env file, by default we'll just look in the current working directory
-        :return: None
-        """
-        super(ValidateXmlFile, self).__init__(methodName)
-        # Get the base class and set the logger to the logger variable - the one defined above.
-        base_class = self.__class__.__bases__[1]
-        base_class.logger = logging.getLogger(self.__class__.__name__)
-        # Now, self.logger is the same as __class__.logger so you can use that in the rest of the methods. If you
-        # define your own class methods, they should still have access via cls.logger.
-        self.logger.addHandler(HANDLER)
-        # will work when inhertiting from APIBase
-        try:
-            self.logger.setLevel(eval(self._get_shared_env_var("LOGGING_LEVEL")))
-        except:
-            self.logger.setLevel(logging.INFO)
 
     @classmethod
     def setUpClass(cls):
@@ -403,6 +383,10 @@ class ValidateXmlFile(ABC):
                 cls.plugin_lines = infile.read()
         except:
             raise AssertionError(f"Could not read plugin.py file: {cls.plugin_file_path}, error:\n{sys.exc_info()}")
+        # Set up list of good HTTP returns codes when testing URLs - first, allow all the normal 200 codes
+        acceptable_return_codes: set[int] = set(range(200, 209))
+        # Extend the list with any additional codes that the user may want to add
+        acceptable_return_codes.update(cls.additional_http_return_codes)
 
     @staticmethod
     def get_item_name(xml_file: str):
@@ -467,8 +451,8 @@ class ValidateXmlFile(ABC):
         for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/SupportURL"):
             self.assertIsInstance(thing.text, str, "Config UI support URLs must be strings.")
             result = httpx.get(thing.text, timeout=10).status_code
-            self.assertEqual(result, 200,
-                             f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
+            self.assertIn(result, self.acceptable_return_codes,
+                          f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
 
         # Test Config UI `Field` elements
         self.logger.info(f"Validating Field elements")

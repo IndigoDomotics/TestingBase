@@ -102,11 +102,14 @@ is really easy:
         # path should NOT end in a / and file name should NOT begin with a /
         server_plugin_dir_path = "/some/path/MyPlugin.indigoPlugin/Contents/Server Folder"
         file_name = "Actions.xml"
+        # Optional: add extra acceptable HTTP status codes for SupportURL validation (default is 200-208)
+        additional_http_return_codes = [301, 302]
 ```
 
-Just add multiple of those to a unit test file and run. Anything that's wrong with the file will be identified. Make 
-sure that the class name order matches the above example `(ValidateXmlFile, APIBase)` to ensure proper execution. See
-the `example_test_xml_files.py` file for examples.
+Just add multiple of those to a unit test file and run. The `additional_http_return_codes` list is optional — only set 
+it if you need to accept status codes beyond the default 200–208 range when validating `SupportURL` elements. Anything 
+that's wrong with the file will be identified. Make sure that the class name order matches the above example 
+`(ValidateXmlFile, APIBase)` to ensure proper execution. See the `example_test_xml_files.py` file for examples.
 
 ### Utility functions
 
