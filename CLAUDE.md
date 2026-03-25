@@ -27,9 +27,11 @@ python -m unittest test_something.TestClass.test_method  # run a single test
 
 ### Module structure
 
-- `__init__.py` — exports `APIBase` and `WebhookStatusCode` for consumer import via `from shared import APIBase`
-- `classes.py` — core classes: `APIBase` (abstract `unittest.TestCase` subclass) and `WebhookStatusCode` enum
+- `__init__.py` — exports `APIBase`, `WebhookStatusCode`, and `ValidateXmlFile` from `classes.py`; exports `HTTP_CODES`, `CURL_CODES`, `DEVICE_FILTERS`, and `DIALOG_FIELD_TYPES` from `constants.py`
+- `classes.py` — core classes: `APIBase` (abstract `unittest.TestCase` subclass), `WebhookStatusCode` enum, and `ValidateXmlFile` (abstract base for XML validation tests)
+- `constants.py` — shared constant mappings: `HTTP_CODES`, `CURL_CODES`, `DEVICE_FILTERS`, `DIALOG_FIELD_TYPES`
 - `utils.py` — standalone utility functions
+- `example_test_xml_files.py` — example/reference file showing how to use `ValidateXmlFile`; not included in `__init__.py` and not meant to be run directly
 
 ### `APIBase` class (`classes.py`)
 
@@ -38,7 +40,7 @@ Abstract base class combining `unittest.TestCase` and `ABC`. All API interaction
 **Setup flow:**
 1. `__init__` loads `.env` via `python-dotenv` (default path: `../` relative to test file, configurable)
 2. `setUpClass` reads shared env vars and sets `cls.good_api_key`, `cls.url_prefix`, `cls.api_prefix`, `cls.plugin_id`, etc.
-3. `tearDown` must call `super()` — adds a 1-second sleep so logs flush before test summary
+3. `tearDown` must call `super()` — adds a 2-second sleep so logs flush before test summary
 
 **Key methods:**
 - `send_raw_message(message_dict)` — POST to `/v2/api/command` with Bearer auth
@@ -57,6 +59,31 @@ Env vars are namespaced. Copy `ENV_TEMPLATE` to `.env` in the consumer repo's `t
 - `shared.<VAR_NAME>` — shared across all test cases (read by `_get_shared_env_var`)
 - `<module>.<TestClass>.<var_name>` — test-class-specific (read by `_get_testcase_env_var`)
 - `<module>.<TestClass>.<method>.<var_name>` — test-method-specific
+
+### `ValidateXmlFile` class (`classes.py`)
+
+Abstract base class for validating Indigo plugin XML files (e.g. `Actions.xml`, `Devices.xml`). Intended to be mixed in with `APIBase`. See `example_test_xml_files.py` for usage examples — copy the pattern into your consumer repo's test file:
+
+```python
+class TestActionsXml(ValidateXmlFile, APIBase):  # ValidateXmlFile must be first
+    server_plugin_dir_path = "/some/path/MyPlugin.indigoPlugin/Contents/Server Folder"
+    file_name = "Actions.xml"
+```
+
+**Class variables to set:**
+- `server_plugin_dir_path` — path to the plugin's Server Folder (no trailing slash)
+- `file_name` — XML file name (no leading slash)
+
+**Setup flow:**
+1. `setUpClass` verifies the plugin dir, `plugin.py`, and XML file all exist; loads `plugin.py` content into `cls.plugin_lines`
+
+### `constants.py`
+
+Shared constant mappings imported by `classes.py` and available via `from shared import ...`:
+- `HTTP_CODES` — `{int: str}` mapping of HTTP status codes to descriptions
+- `CURL_CODES` — `{str: str}` mapping of curl error codes to descriptions
+- `DEVICE_FILTERS` — list of valid Indigo `deviceFilter` string values
+- `DIALOG_FIELD_TYPES` — list of valid ConfigUI `Field` `type` attribute values
 
 ### `utils.py`
 

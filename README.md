@@ -92,19 +92,21 @@ at it let us know, we're always looking for help).
 
 If you override the `__init__`, `tearDown`, and/or `classSetUp` then you must call super.
 
-### TestXmlBase
+### ValidateXmlFile
 
 This is another base class that will allow you to validate the various XML files used in Indigo plugins. Setup 
 is really easy:
 
 ```aiignore
-    class TestActionsXml(ValidateXmlFile, APIBase):
+    class TestActionsXml(ValidateXmlFile, APIBase):  # NOTE: order matters here, ValidateXmlFile must be first
         # path should NOT end in a / and file name should NOT begin with a /
         server_plugin_dir_path = "/some/path/MyPlugin.indigoPlugin/Contents/Server Folder"
         file_name = "Actions.xml"
 ```
 
-Just add multiple of those to a unit test file and run. Anything that's wrong with the file will be identified.
+Just add multiple of those to a unit test file and run. Anything that's wrong with the file will be identified. Make 
+sure that the class name order matches the above example `(ValidateXmlFile, APIBase)` to ensure proper execution. See
+the `example_test_xml_files.py` file for examples.
 
 ### Utility functions
 

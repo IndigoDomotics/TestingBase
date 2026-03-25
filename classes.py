@@ -354,7 +354,7 @@ class ValidateXmlFile(ABC):
     The tests include checks for required elements (like element `id` and `type` attributes) and syntax. To use this
     class,you simply define a class in your test file like this:
 
-    class TestActionsXml(ValidateXmlFile, APIBase):  # NOTE: order is important here, APIBase must be the second class
+    class TestActionsXml(ValidateXmlFile, APIBase):  # NOTE: order is important here ValidateXmlFile must be first
         # path should NOT end in a / and file name should NOT begin with a /
         server_plugin_dir_path = "/some/path/MyPlugin.indigoPlugin/Contents/Server Folder"
         file_name = "Actions.xml"
