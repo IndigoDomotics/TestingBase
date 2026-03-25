@@ -80,8 +80,10 @@ class APIBase(unittest.TestCase, ABC):
         # Load the file containing the environment variables for the user's install
         dotenv.load_dotenv(env_path)
         # Get the base class and set the logger to the logger variable - the one defined above.
-        base_class = self.__class__.__bases__[0]
-        base_class.logger = logging.getLogger(self.__class__.__name__)
+        # Old way - just realized that the class name is wrong on log lines - shouldn't be using base_class.logger
+        # base_class = self.__class__.__bases__[0]
+        # base_class.logger = logging.getLogger(self.__class__.__name__)
+        self.__class__.logger = logging.getLogger(self.__class__.__name__)
         # Now, self.logger is the same as __class__.logger so you can use that in the rest of the methods. If you
         # define your own class methods, they should still have access via cls.logger.
         self.logger.addHandler(HANDLER)
@@ -343,7 +345,7 @@ class APIBase(unittest.TestCase, ABC):
         super(APIBase, self).tearDown()
         self.logger.info("...Tearing down test")
         # We add this little sleep to make sure that all test logging happens before the test result summary is shown
-        time.sleep(1)
+        time.sleep(2)
 
 class ValidateXmlFile(ABC):
     """
