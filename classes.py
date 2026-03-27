@@ -410,9 +410,9 @@ class ValidateXmlFile(ABC):
         except:
             raise AssertionError(f"Could not read plugin.py file: {cls.plugin_file_path}, error:\n{sys.exc_info()}")
         # Set up list of good HTTP returns codes when testing URLs - first, allow all the normal 200 codes
-        acceptable_return_codes: set[int] = set(range(200, 209))
+        cls.acceptable_return_codes: set[int] = set(range(200, 209))
         # Extend the list with any additional codes that the user may want to add
-        acceptable_return_codes.update(cls.additional_http_return_codes)
+        cls.acceptable_return_codes.update(cls.additional_http_return_codes)
 
     @staticmethod
     def get_item_name(xml_file: str):
@@ -477,7 +477,7 @@ class ValidateXmlFile(ABC):
         for thing in root.findall(f"./{root.tag[:-1]}/ConfigUI/SupportURL"):
             self.assertIsInstance(thing.text, str, "Config UI support URLs must be strings.")
             result = httpx.get(thing.text, timeout=10).status_code
-            self.assertIn(result, self.additional_http_return_codes,
+            self.assertIn(result, self.acceptable_return_codes,
                           f"ERROR: Got status code {result} -> {HTTP_CODES[result]}.")
 
         # Test Config UI `Field` elements
