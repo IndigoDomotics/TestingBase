@@ -6,8 +6,7 @@ import logging
 import pathlib
 import subprocess
 import sys
-import warnings
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from typing import Optional
 
 # This will be the standard logging format for all the logging in the tests.
@@ -113,6 +112,34 @@ def compare_dicts(
     else:
         return dict1 == dict2
 
+class JSONDateEncoder(json.JSONEncoder):
+    """ This encoder class will convert a python datetime and date objects to strings before
+        the actual JSON encoding. It has to be done or encoding any datetime objects will
+        fail. It will also encode a NaN (not a number) object into None since the default
+        encoder mishandles it.
+
+        This is a copy of the IndigoJSONEncoder class from indigo.utils.
+    """
+    def default(self, obj) -> object:
+        """
+        Check to see if the object to be converted is a datetime.datetime or a
+        datetime.date object, and if so return the ISO date string for it. Also, if the
+        object is one of the Indigo constants, we create a full string representation
+        that looks something like this: "indigo.kHvacMode.Off" which can later be
+        reconstituted to the class by using eval() on it.
+
+        Otherwise, call the normal conversion.
+
+        :param obj: object to convert
+        :return: converted object
+        """
+        if isinstance(obj, (date, datetime)):
+            # return the ISO string for the date or datetime object
+            return obj.isoformat()
+        elif math.isnan(obj):  # noqa
+            return None
+        # otherwise, let the default encoder do it's work
+        return super().default(obj)
 
 class SoftAssertionWarning(UserWarning):
     pass

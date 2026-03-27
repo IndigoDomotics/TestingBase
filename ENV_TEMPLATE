@@ -19,3 +19,8 @@ shared.PLUGIN_ID=com.some.plugin
 shared.RESTART_IN_DEBUGGER=false
 ## This is the amount of time to wait for a plugin to restart.
 shared.PLUGIN_RESTART_WAIT_TIME=5
+## This is the amount of time to pause after doing an update. Defaults to 0, which means no pause. We've found that
+## sometimes updates, like a variable update, may take longer to propagate appropriately, so after we set it we can
+## pause a brief amount of time for everything to propagate. This is totally optional as we'll just use 0.0 (no pause)
+## as the default.
+shared.PAUSE_AFTER_UPDATE=0.0

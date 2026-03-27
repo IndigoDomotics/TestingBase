@@ -65,8 +65,12 @@ class APIBase(unittest.TestCase, ABC):
         cls.restart_plugin_in_debugger: bool = cls._get_shared_env_var("RESTART_IN_DEBUGGER", expected_type=bool)
         # When you restart, wait this many seconds before continuing. This will give the plugin enough time to get
         # fully started.
-        cls.wait_time: int = cls._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME", expected_type=int)
-        # While print() statements work while running tests, using a logger is a better solution
+        cls.wait_time: int = cls._get_shared_env_var("PLUGIN_RESTART_WAIT_TIME", expected_type=float)
+        # Sometimes updates take a little time to propagate - for instance, you use set_variable then immediately refresh
+        # the variable using get_indigo_object. We've found that the variable update may take long enough for the
+        # get_indigo_object call to return before the variable is actually updated. So we're going to allow an optional
+        # parameter to pause after an update occurs before the function returns.
+        cls.pause_after_update: int = cls._get_shared_env_var("PAUSE_AFTER_UPDATE", expected_type=float, default=0.0)
 
     def __init__(self, methodName: str, env_path: str = ".env") -> None:
         """
@@ -111,12 +115,14 @@ class APIBase(unittest.TestCase, ABC):
     def send_raw_message(cls,
                          message_dict: dict,
                          bearer_token: Optional[str] = None,
-                         timeout: float = DEFAULT_TIMEOUT) -> httpx.Response:
+                         timeout: float = DEFAULT_TIMEOUT,
+                         pause_after: float | None = None) -> httpx.Response:
         """ Send a message payload to the API and return the response object.
 
         :param message_dict: dictionary that contains the full/complete message to send
         :param bearer_token: a token to use for authentication - defaults to the configured shared.GOOD_API_KEY
         :param timeout: timeout in seconds as a float
+        :param pause_after: sometimes changes can take a while to propagate - so we will optionally pause before returning
         :return response: httpx.Response object
         """
         if bearer_token is None:
@@ -124,7 +130,11 @@ class APIBase(unittest.TestCase, ABC):
         headers = {"Authorization": f"Bearer {bearer_token}"}
         url = f"{cls.api_prefix}/command"
         cls.logger.info("...sending HTTP API command")
-        return httpx.post(url, headers=headers, json=message_dict, verify=False, timeout=timeout)
+        reply = httpx.post(url, headers=headers, json=message_dict, verify=False, timeout=timeout)
+        if pause_after is None:
+            pause_after = cls.pause_after_update
+        time.sleep(pause_after)
+        return reply
 
     @classmethod
     def send_simple_command(cls,
@@ -133,7 +143,8 @@ class APIBase(unittest.TestCase, ABC):
                             object_id: int,
                             parameters: Optional[dict] = None,
                             bearer_token: Optional[str] = None,
-                            timeout: float = DEFAULT_TIMEOUT) -> httpx.Response:
+                            timeout: float = DEFAULT_TIMEOUT,
+                            pause_after: float | None = None) -> httpx.Response:
         """ A simple method to create a message payload.
 
         :param message_id: the ID to pass through in the message - required in this method
@@ -143,6 +154,7 @@ class APIBase(unittest.TestCase, ABC):
         :param bearer_token: a token to use for authentication - defaults to the configured shared.GOOD_API_KEY in
                              send_raw_message
         :param timeout: timeout in seconds as a float
+        :param pause_after: sometimes changes can take a while to propagate - so we will optionally pause before returning
         :return response: httpx.Response object
         """
         message_dict: dict = {
@@ -152,7 +164,8 @@ class APIBase(unittest.TestCase, ABC):
         }
         if parameters is not None:
             message_dict["parameters"] = parameters
-        return cls.send_raw_message(message_dict, bearer_token, timeout=timeout)
+        reply: httpx.Response = cls.send_raw_message(message_dict, bearer_token, timeout=timeout, pause_after=pause_after)
+        return reply
 
     @classmethod
     def get_indigo_object(cls,
@@ -191,10 +204,18 @@ class APIBase(unittest.TestCase, ABC):
         return return_object
 
     @classmethod
-    def set_variable(cls, message_id: str, variable: Union[int, str, dict], new_value: str = "") -> httpx.Response:
-        # if they passed in an int, we assume it's a good variable ID. If you pass in a string, try to turn it into an
-        # int. If you pass in a dict (after getting the full device dict from the API) then we get the ID
-        # out of the dict.
+    def set_variable(cls, message_id: str, variable: Union[int, str, dict], new_value: str = "", pause_after: float | None = None) -> httpx.Response:
+        """ Set a variable to a new value. If they passed in an int, we assume it's a good variable ID. If you pass in
+            a string, try to turn it into an int. If you pass in a dict (after getting the full device dict from the
+            API) then we get the ID out of the dict.
+
+        :param message_id: the ID to pass through in the message - required in this method
+        :param variable: either a variable ID (either int or str) or a dict containing the full device dict
+        :param new_value: new value to set the variable to as a string
+        :param pause_after: sometimes changes can take a while to propagate - so we will optionally pause before returning
+        :return: httpx Response object
+        """
+        #
         if isinstance(variable, dict):
             object_id = int(variable["id"])
         elif isinstance(variable, str):
@@ -202,7 +223,7 @@ class APIBase(unittest.TestCase, ABC):
         else:
             object_id = variable
         message = "indigo.variable.updateValue"
-        reply = cls.send_simple_command(message_id, message, object_id, parameters={"value": new_value})
+        reply = cls.send_simple_command(message_id, message, object_id, parameters={"value": new_value}, pause_after=pause_after)
         if reply.status_code not in range(200, 299):
             raise AssertionError(reply.text, "status reply code was not 200")
         reply_dict = reply.json()
@@ -219,7 +240,8 @@ class APIBase(unittest.TestCase, ABC):
                      message_dict: dict,
                      webhook_id: str,
                      bearer_token: Optional[str],
-                     timeout: float = DEFAULT_TIMEOUT
+                     timeout: float = DEFAULT_TIMEOUT,
+                     pause_after: float | None = None
                      ) -> httpx.Response:
         """ Send a webhook and return the response object.
 
@@ -227,6 +249,7 @@ class APIBase(unittest.TestCase, ABC):
         :param webhook_id: the webhook ID from the webhook config - required in this method
         :param bearer_token: a token to use for authentication - defaults to the configured shared.GOOD_API_KEY
         :param timeout: timeout in seconds as a float
+        :param pause_after: sometimes changes can take a while to propagate - so we will optionally pause before returning
         :return response: httpx.Response object
         """
         url = f"{cls.url_prefix}/webhook/{webhook_id}"
@@ -253,6 +276,9 @@ class APIBase(unittest.TestCase, ABC):
                                   data=message_dict.get("params", None),
                                   verify=False,
                                   timeout=timeout)
+        if pause_after is None:
+            pause_after = cls.pause_after_update
+        time.sleep(pause_after)
         return response
 
     @classmethod
