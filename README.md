@@ -12,13 +12,33 @@ WebServerPlugin
 +- docs
 +- tests
   +- shared   <- this is where you mount this submodule
-  +- .env  <- this is where you set the environment vars specified in the template
+  +- .env  <- this is where you set the environment vars specified in the template (should be .gitignore'd)
   +- test_something.py  <- your test cases would subclass shared.utils.APIBase
+  +- testing-requirements.txt  <- this is where you put the requirements for your tests (see below)
+  +- venv  <- this is the virtual env where you install the requirements for your tests (see below)
 ```
 ### Python package requirements
 
 In order to use this repo, you must have `python-dotenv` and `httpx` installed. The `testing-requirements.txt` file is 
-always going to have the correct packages needed by this module.
+always going to have the correct packages needed by this module. It is highly recommended that you install these 
+into a virtual environment that you will use to run the tests. We recommend creating a virtual environment in the 
+`tests` directory (we name ours `venv`) of the repo and then installing the requirements with 
+`pip install -r shared/module-requirements.txt`. If your tests require additional packages, then we suggest creating 
+`tests/testings-requirements.txt` and specifying any additional packages there. You can also have that file point to 
+the `shared/module-requirements.txt` file so that both sets of requirements are installed. For instance, here's an 
+example of a `tests/testings-requirements.txt` file:
+
+```aiignore
+-r shared/module-requirements.txt
+selenium
+webdriver-manager
+cryptography==41.0.7
+```
+The first line will install the requirements from the `shared/module-requirements.txt` file. Then any other requirements
+will be installed.
+
+Obviously, you should make sure that the `venv` is not checked into your repo - it should probably be in the `.gitignore` 
+file.
 
 ## Installing and Updating the submodule
 
@@ -29,8 +49,9 @@ can tell by looking for the `.gitmodules` file at the top level of the repo. It 
 
 ```aiignore
 [submodule "tests/shared"]
-	path = tests/shared
-	url = https://github.com/IndigoDomotics/TestingBase.git
+    path = tests/shared
+    url = https://github.com/IndigoDomotics/TestingBase.git
+    branch = main
 ```
 
 If that file is there and contains the `tests/shared` submodule definition, you'll need to init it from the command 
@@ -80,6 +101,10 @@ class MyTestCase(APIBase):
         # is the current working directory so you can just not pass anything for the second arg.
         super(APIBase, self).__init__(methodName, "/my/custom/path/to/.env")
 ```
+**Note**: you probably won't need to override the `__init__` method, but if you do, you'll need to call `super` in it. The
+likely setup you'll need is to implement the `setUpClass` for things that are shared across all of your tests, 
+`setUp` for things that are specific to each test, and likewise `tearDownClass` and `tearDown` methods. Don't forget to
+call `super` in those methods so that the base class methods are allowed to do their work.
 
 ### APIBase
 
