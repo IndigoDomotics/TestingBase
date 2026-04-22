@@ -6,6 +6,7 @@ import logging
 import pathlib
 import subprocess
 import sys
+import time
 from datetime import timedelta, datetime, date
 from typing import Optional
 
@@ -74,11 +75,17 @@ def run_host_script(script: str) -> str:
     :param script: string containing the IOM script to run
     :return: string containing the result
     """
-    result: subprocess.CompletedProcess = subprocess.run(
-        ["/usr/local/indigo/indigo-host", "-e", script],
-        stdout=subprocess.PIPE
-    )
-    return result.stdout.decode("utf8").strip("\n")
+    for attempt in range(5):
+        result: subprocess.CompletedProcess = subprocess.run(
+            ["/usr/local/indigo/indigo-host", "-e", script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if "Multiple Indigo Servers" not in result.stderr.decode("utf8"):
+            return result.stdout.decode("utf8").strip("\n")
+        if attempt < 4:
+            time.sleep(3.0)
+    raise RuntimeError(f"indigo-host failed after 5 attempts: {result.stderr.decode('utf8').strip()}")
 
 def within_time_tolerance(datetime1, datetime2, tolerance_seconds: int = 1, raise_exc: bool = False) -> bool:
     """Check if two datetime objects are within specified seconds of each other"""
