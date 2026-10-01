@@ -10,7 +10,7 @@ TestingBase is a git submodule providing shared testing infrastructure for [Indi
 
 Dependencies listed in `module-requirements.txt`:
 ```
-pip install python-dotenv httpx==0.25.2
+pip install python-dotenv httpx==0.28.1
 ```
 
 ## Running Tests
